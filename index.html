@@ -229,73 +229,18 @@
       color: var(--muted);
     }
 
-    /* Desktop: side-by-side panels */
     .lb-layout {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.35fr 0.95fr;
       gap: 1.5rem;
       align-items: start;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .lb-panel-right {
+      display: block;
     }
 
-    /* Podium (top-3 visual) – web only */
-    .lb-podium {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      height: 110px;
-    }
-    .podium-place {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex: 1;
-      max-width: 100px;
-    }
-    .podium-avatar {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem;
-      font-weight: 800;
-      margin-bottom: 0.3rem;
-      border: 2px solid transparent;
-      flex-shrink: 0;
-    }
-    .podium-name {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--text);
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 90px;
-    }
-    .podium-score {
-      font-size: 0.68rem;
-      color: var(--muted);
-    }
-    .podium-bar {
-      width: 100%;
-      border-radius: 6px 6px 0 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.1rem;
-      color: rgba(0,0,0,0.5);
-      margin-top: 0.4rem;
-    }
-    .podium-place[data-rank="1"] .podium-bar { height: 70px; background: linear-gradient(160deg, #ffd700, #f59e0b); }
-    .podium-place[data-rank="2"] .podium-bar { height: 52px; background: linear-gradient(160deg, #94a3b8, #64748b); }
-    .podium-place[data-rank="3"] .podium-bar { height: 38px; background: linear-gradient(160deg, #b87333, #92400e); }
-    .podium-place[data-rank="1"] .podium-avatar { background: rgba(255,215,0,0.15); border-color: #ffd700; }
-    .podium-place[data-rank="2"] .podium-avatar { background: rgba(148,163,184,0.15); border-color: #94a3b8; }
-    .podium-place[data-rank="3"] .podium-avatar { background: rgba(184,115,51,0.15); border-color: #b87333; }
-
-    /* Table */
     .lb-panel {
       background: rgba(255,255,255,0.02);
       border: 1px solid rgba(255,255,255,0.07);
@@ -316,127 +261,145 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
-    .lb-col-labels {
+    .lb-table-head {
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .lb-head-row,
+    .lb-table-row {
       display: grid;
-      padding: 0.5rem 1.2rem;
-      font-size: 0.7rem;
-      color: var(--muted);
+      grid-template-columns: 36px minmax(140px, 1fr) 110px 56px 42px 70px;
+      align-items: center;
+      gap: 8px;
+      padding: 0.65rem 0.9rem;
+    }
+    .lb-head-row {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.3);
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
-    .lb-row {
-      display: grid;
-      padding: 0.7rem 1.2rem;
-      align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      transition: background 0.15s;
-      position: relative;
-    }
-    .lb-row:last-child { border-bottom: none; }
-    .lb-row:hover { background: rgba(255,255,255,0.025); }
-    .lb-row.is-me { background: rgba(0,229,255,0.06); }
-    .lb-row.is-me::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: var(--accent);
-      border-radius: 0 2px 2px 0;
-    }
-    .lb-row.flash-new {
-      animation: lb-flash 0.7s ease-out;
-    }
-    @keyframes lb-flash {
-      0%   { background: rgba(0,229,255,0.18); }
-      100% { background: transparent; }
-    }
-
-    /* Row grid columns: rank / avatar+name / score / (web extras) */
-    .lb-col-labels.full-cols,
-    .lb-row.full-cols {
-      grid-template-columns: 36px 1fr 70px 60px 60px;
-    }
-    .lb-col-labels.compact-cols,
-    .lb-row.compact-cols {
-      grid-template-columns: 36px 1fr 70px;
-    }
-
-    .lb-rank {
-      font-size: 0.82rem;
       font-weight: 700;
-      color: var(--muted);
-      text-align: center;
     }
-    .lb-rank.top1 { color: #ffd700; }
-    .lb-rank.top2 { color: #94a3b8; }
-    .lb-rank.top3 { color: #b87333; }
-
-    .lb-player {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      min-width: 0;
+    .lb-table-row {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.9rem;
     }
-    .lb-avatar {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: rgba(124,58,237,0.3);
-      border: 1px solid rgba(124,58,237,0.5);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      flex-shrink: 0;
+    .lb-table-row:last-child {
+      border-bottom: none;
     }
-    .lb-name {
-      font-size: 0.88rem;
+    .lb-table-row.is-me {
+      background: rgba(16,185,129,0.1);
+    }
+    .lb-col-rank {
+      width: 28px;
+      font-size: 0.92rem;
       font-weight: 600;
+      color: rgba(255,255,255,0.5);
+    }
+    .lb-col-name {
+      min-width: 0;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .lb-score {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--accent);
-      text-align: right;
+    .lb-col-meta {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      line-height: 1.25;
     }
-    .lb-cuts {
-      font-size: 0.82rem;
-      color: var(--red);
+    .lb-col-date {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+    }
+    .lb-col-change {
+      font-size: 0.8rem;
       font-weight: 600;
-      text-align: right;
+      text-align: center;
     }
-    .lb-area {
-      font-size: 0.82rem;
-      color: var(--green);
+    .lb-col-score {
+      font-size: 0.92rem;
       font-weight: 600;
+      color: #fff;
       text-align: right;
     }
-    .lb-delta {
-      font-size: 0.7rem;
+    .lb-text-me {
+      color: #10B981;
       font-weight: 700;
-      text-align: right;
     }
-    .lb-delta.up   { color: var(--green); }
-    .lb-delta.down { color: var(--red); }
-    .lb-delta.same { color: var(--muted); }
+    .lb-col-change.up   { color: #22C55E; }
+    .lb-col-change.down { color: #EF4444; }
+    .lb-col-change.same { color: rgba(255,255,255,0.25); }
+    .lb-empty {
+      color: rgba(255,255,255,0.4);
+      font-size: 0.95rem;
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .lb-side-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .lb-side-row:last-child {
+      border-bottom: none;
+    }
+    .lb-side-rank {
+      width: 28px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .lb-side-player {
+      min-width: 0;
+      flex: 1;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.88);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lb-side-value {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.72);
+      text-align: right;
+      flex-shrink: 0;
+    }
 
-    /* Sparkline trend (web only) */
-    .lb-trend svg { display: block; }
-
-    /* Mobile: single compact panel fills width */
     @media (max-width: 600px) {
-      .lb-layout { grid-template-columns: 1fr; }
-      .lb-podium { display: none; }
-      .lb-panel-right { display: none; }
+      .lb-layout {
+        grid-template-columns: 1fr;
+      }
+      .lb-panel-right {
+        display: none;
+      }
       .lb-tabs { gap: 0.35rem; }
       .lb-tab { padding: 0.38rem 0.85rem; font-size: 0.78rem; }
-    }
-    /* Hide extra cols on mobile */
-    @media (max-width: 600px) {
-      .full-cols { grid-template-columns: 32px 1fr 64px !important; }
-      .lb-cuts, .lb-area { display: none; }
+      .lb-head-row,
+      .lb-table-row {
+        grid-template-columns: 28px minmax(100px, 1fr) 72px 46px 32px 52px;
+        gap: 6px;
+        padding: 0.65rem 0.75rem;
+      }
+      .lb-col-meta,
+      .lb-col-date {
+        font-size: 0.68rem;
+      }
+      .lb-col-name,
+      .lb-col-score {
+        font-size: 0.84rem;
+      }
     }
     
     /* ── MAP PREVIEW ── */
@@ -579,7 +542,7 @@
   <section id="leaderboard">
     <div class="container">
       <h2 class="section-title">Leaderboard</h2>
-      <p class="section-sub">Live rankings across all active boards — updated every few seconds.</p>
+      <p class="section-sub">Live rankings from the same leaderboard service the mobile app uses.</p>
 
       <!-- Live status bar -->
       <div class="lb-live-bar">
@@ -587,47 +550,34 @@
         <span class="lb-updated" id="lb-updated-text">Updating…</span>
       </div>
 
-      <!-- Tab switcher -->
-      <div class="lb-tabs" id="lb-tabs">
-        <button class="lb-tab active" data-board="global">🌍 Global</button>
-        <button class="lb-tab" data-board="weekly">📅 This Week</button>
-        <button class="lb-tab" data-board="city">🏙 City</button>
-        <button class="lb-tab" data-board="teams">⚡ Teams</button>
+      <!-- Tab switchers -->
+      <div class="lb-tabs" id="lb-scope-tabs">
+        <button class="lb-tab active" data-scope="games">Games</button>
+        <button class="lb-tab" data-scope="local">Local</button>
+        <button class="lb-tab" data-scope="city">City</button>
+        <button class="lb-tab" data-scope="global">Global</button>
+      </div>
+      <div class="lb-tabs" id="lb-time-tabs">
+        <button class="lb-tab active" data-time="daily">Daily</button>
+        <button class="lb-tab" data-time="weekly">Weekly</button>
+        <button class="lb-tab" data-time="monthly">Monthly</button>
+        <button class="lb-tab" data-time="all_time">All Time</button>
       </div>
 
-      <!-- Desktop: podium + full table  /  Mobile: compact table only -->
       <div class="lb-layout" id="lb-layout">
-
-        <!-- LEFT: podium + full ranked table -->
         <div>
-          <div class="lb-podium" id="lb-podium">
-            <!-- filled by JS -->
-          </div>
           <div class="lb-panel">
             <div class="lb-panel-header">
-              <span class="lb-panel-title" id="lb-left-title">Top Players</span>
+              <span class="lb-panel-title">Leaderboard</span>
             </div>
-            <div class="lb-col-labels full-cols">
-              <span style="text-align:center">#</span>
-              <span>Player</span>
-              <span style="text-align:right">Score</span>
-              <span style="text-align:right">Cuts</span>
-              <span style="text-align:right" id="lb-area-header">Area</span>
-            </div>
+            <div class="lb-table-head" id="lb-table-head"><!-- filled by JS --></div>
             <div id="lb-rows-left"><!-- filled by JS --></div>
           </div>
         </div>
-
-        <!-- RIGHT: secondary panel (web only) — rival matchups / rising players -->
         <div class="lb-panel-right">
           <div class="lb-panel" style="margin-bottom:1.5rem">
             <div class="lb-panel-header">
-              <span class="lb-panel-title">🔥 Rising Fast</span>
-            </div>
-            <div class="lb-col-labels compact-cols">
-              <span style="text-align:center">#</span>
-              <span>Player</span>
-              <span style="text-align:right">+Pts</span>
+              <span class="lb-panel-title">🔥 Biggest Movers</span>
             </div>
             <div id="lb-rows-rising"><!-- filled by JS --></div>
           </div>
@@ -638,7 +588,6 @@
             <div id="lb-matchups"><!-- filled by JS --></div>
           </div>
         </div>
-
       </div>
     </div>
   </section>
@@ -682,11 +631,11 @@
 
     <!-- FOOTER -->
     <footer>
-      <p>
-        &copy; 2026 Triangulate &mdash;
-    <a href="https://github.com/zivlazar/triangulate-game" target="_blank" rel="noopener">GitHub</a>
-          &nbsp;&bull;&nbsp;
-    <a href="mailto:hello@triangulate.live">Contact</a>
+  <p>
+    &copy; 2026 Triangulate &mdash;
+        <a href="mailto:hello@triangulate.live">Contact</a>
+    &nbsp;&bull;&nbsp;
+    <a href="privacy-policy.html">Privacy Policy</a>
   </p>
 </footer>
 
@@ -878,114 +827,119 @@
   frame();
 })();
 
-// ── Leaderboard — live from Supabase ──
+// Leaderboard — same RPC/data source as the mobile app
 (function () {
   const SUPABASE_URL = 'https://rgczribfoutvpashjgrx.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnY3pyaWJmb3V0dnBhc2hqZ3J4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMTEzMjIsImV4cCI6MjA5MTU4NzMyMn0.sAp2ao4iH8xeV9Q-MvYBfhK9T8NSbe_D61e127VWAiE';
 
-  // ── Supabase REST helper ──
-  async function sbQuery(table, params) {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-    const res = await fetch(url, {
-      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+  const TIME_TO_PERIOD = {
+    daily: 'today',
+    weekly: 'week',
+    monthly: 'week',
+    all_time: 'all_time',
+  };
+
+  const SCOPE_LABELS = {
+    games: 'Event',
+    local: 'Location',
+    city: 'City',
+    global: 'Country',
+  };
+
+  function getViewerId() {
+    return localStorage.getItem('triangulate_player_id') || 'web-public-viewer';
+  }
+
+  async function sbRpc(fn, payload) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`Supabase ${res.status}`);
     return res.json();
   }
 
-  // ── Period → column mapping ──
-  const PERIOD_MAP = {
-    global: { score: 'score_all_time', rank: 'rank_all_time' },
-    weekly: { score: 'score_week',     rank: 'rank_week' },
-  };
-
-  // ── Fetch leaderboard from Supabase ──
-  async function fetchLeaderboard(period, limit) {
-    const cols = PERIOD_MAP[period];
-    if (!cols) return []; // city/teams not yet supported
-    const data = await sbQuery('player_profiles', {
-      select: `player_id,nickname,color,${cols.score},${cols.rank},rank_change`,
-      [`${cols.score}`]: 'gt.0',
-      order: `${cols.rank}.asc`,
-      limit: String(limit),
+  async function fetchBracket(period) {
+    const data = await sbRpc('get_my_bracket', {
+      p_player_id: getViewerId(),
+      p_period: period,
+      p_include_test: true,
     });
-    return data.map(row => ({
-      rank: row[cols.rank] ?? 999,
-      name: row.nickname || 'Unknown',
-      color: row.color || '#7c3aed',
-      score: row[cols.score] || 0,
-      rank_change: row.rank_change || 0,
-    }));
+
+    return (data || [])
+      .slice()
+      .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+      .map(row => ({
+        player_id: row.player_id,
+        rank: row.rank ?? 999,
+        name: row.nickname || 'Unknown',
+        color: row.color || '#7c3aed',
+        score: row.score || 0,
+        rank_change: row.rank_change || 0,
+        is_me: Boolean(row.is_me),
+        city: row.city || '',
+        country: row.country || '',
+        last_event: row.last_event || '',
+        local_area: row.local_area || '',
+        last_event_date: row.last_event_date || '',
+      }));
   }
 
-  // ── Fetch rising players (biggest rank_change in current period) ──
-  async function fetchRising(period, limit) {
-    const cols = PERIOD_MAP[period];
-    if (!cols) return [];
-    const data = await sbQuery('player_profiles', {
-      select: `nickname,color,${cols.rank},rank_change`,
-      'rank_change': 'gt.0',
-      [`${cols.score}`]: 'gt.0',
-      order: 'rank_change.desc',
-      limit: String(limit),
-    });
-    return data.map(row => ({
-      rank: row[cols.rank] ?? 0,
-      name: row.nickname || 'Unknown',
-      color: row.color || '#7c3aed',
-      gain: row.rank_change || 0,
-    }));
+  function locationValue(scope, entry) {
+    switch (scope) {
+      case 'games': return entry.last_event || '-';
+      case 'local': return entry.local_area || '-';
+      case 'city': return entry.city || '-';
+      case 'global': return entry.country || '-';
+      default: return '-';
+    }
   }
 
-  // ── Rendering helpers ──
-  function rankClass(r) {
-    if (r === 1) return 'top1';
-    if (r === 2) return 'top2';
-    if (r === 3) return 'top3';
-    return '';
+  function changeClass(change) {
+    if (change > 0) return 'up';
+    if (change < 0) return 'down';
+    return 'same';
   }
 
-  function avatarInitial(name) {
-    return (name || '?')[0].toUpperCase();
-  }
-
-  function renderPodium(players) {
-    const podium = document.getElementById('lb-podium');
-    if (!podium) return;
-    if (players.length < 3) { podium.innerHTML = ''; return; }
-    const order = [players[1], players[0], players[2]];
-    const ranks = [2, 1, 3];
-    podium.innerHTML = order.map((p, i) => `
-      <div class="podium-place" data-rank="${ranks[i]}">
-        <div class="podium-avatar" style="background:${p.color}22;border-color:${p.color}">${avatarInitial(p.name)}</div>
-        <div class="podium-name">${p.name}</div>
-        <div class="podium-score">${p.score.toLocaleString()}</div>
-        <div class="podium-bar">${ranks[i]}</div>
+  function renderTableHead(scope) {
+    const el = document.getElementById('lb-table-head');
+    if (!el) return;
+    const meta = scope === 'games' ? 'Event' : SCOPE_LABELS[scope];
+    el.innerHTML = `
+      <div class="lb-head-row">
+        <div>#</div>
+        <div>Player</div>
+        <div style="text-align:center">${meta}</div>
+        <div style="text-align:center">Date</div>
+        <div style="text-align:center">+/-</div>
+        <div style="text-align:right">Score</div>
       </div>
-    `).join('');
+    `;
   }
 
-  function renderRows(containerId, players, colClass) {
+  function renderRows(containerId, players, scope) {
     const el = document.getElementById(containerId);
     if (!el) return;
     if (players.length === 0) {
-      el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted)">No players ranked yet</div>';
+      el.innerHTML = '<div class="lb-empty">No players yet</div>';
       return;
     }
-    el.innerHTML = players.map(p => {
+    el.innerHTML = players.map((p, index) => {
       const changeStr = p.rank_change > 0 ? `+${p.rank_change}` : p.rank_change < 0 ? String(p.rank_change) : '–';
-      const changeClass = p.rank_change > 0 ? 'up' : p.rank_change < 0 ? 'down' : 'same';
+      const metaValue = locationValue(scope, p);
       return `
-        <div class="lb-row ${colClass}" data-name="${p.name}" data-rank="${p.rank}">
-          <span class="lb-rank ${rankClass(p.rank)}">${p.rank}</span>
-          <div class="lb-player">
-            <div class="lb-avatar" style="background:${p.color}30;border-color:${p.color}">${avatarInitial(p.name)}</div>
-            <span class="lb-name">${p.name}</span>
-          </div>
-          <span class="lb-score">${p.score.toLocaleString()}</span>
-          <span class="lb-cuts lb-delta ${changeClass}">${changeStr}</span>
-          <span class="lb-area" style="color:${p.color}">${avatarInitial(p.name)}</span>
+        <div class="lb-table-row ${p.is_me ? 'is-me' : ''}">
+          <div class="lb-col-rank ${p.is_me ? 'lb-text-me' : ''}">${index + 1}</div>
+          <div class="lb-col-name ${p.is_me ? 'lb-text-me' : ''}">${p.is_me ? 'You' : p.name}</div>
+          <div class="lb-col-meta">${metaValue}</div>
+          <div class="lb-col-date">${p.last_event_date || '-'}</div>
+          <div class="lb-col-change ${changeClass(p.rank_change)}">${changeStr}</div>
+          <div class="lb-col-score ${p.is_me ? 'lb-text-me' : ''}">${p.score.toLocaleString()}</div>
         </div>
       `;
     }).join('');
@@ -994,31 +948,22 @@
   function renderRising(players) {
     const el = document.getElementById('lb-rows-rising');
     if (!el) return;
-    if (players.length === 0) {
+    const movers = players
+      .filter(p => p.rank_change !== 0)
+      .slice()
+      .sort((a, b) => Math.abs(b.rank_change) - Math.abs(a.rank_change))
+      .slice(0, window.innerWidth <= 600 ? 5 : 8);
+    if (movers.length === 0) {
       el.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.82rem">No movers yet</div>';
       return;
     }
-    el.innerHTML = players.map(p => `
-      <div class="lb-row compact-cols">
-        <span class="lb-rank">${p.rank}</span>
-        <div class="lb-player">
-          <div class="lb-avatar" style="background:${p.color}30;border-color:${p.color}">${avatarInitial(p.name)}</div>
-          <span class="lb-name">${p.name}</span>
-        </div>
-        <span class="lb-score" style="color:var(--green)">▲${p.gain}</span>
+    el.innerHTML = movers.map(p => `
+      <div class="lb-side-row">
+        <div class="lb-side-rank">${p.rank}</div>
+        <div class="lb-side-player">${p.is_me ? 'You' : p.name}</div>
+        <div class="lb-side-value" style="color:${p.rank_change > 0 ? 'var(--green)' : 'var(--red)'}">${p.rank_change > 0 ? '▲' : '▼'}${Math.abs(p.rank_change)}</div>
       </div>
     `).join('');
-  }
-
-  function renderComingSoon(msg) {
-    const left = document.getElementById('lb-rows-left');
-    if (left) left.innerHTML = `<div style="padding:3rem 1rem;text-align:center;color:var(--muted)"><div style="font-size:1.6rem;margin-bottom:0.5rem">🚧</div>${msg}</div>`;
-    const podium = document.getElementById('lb-podium');
-    if (podium) podium.innerHTML = '';
-    const rising = document.getElementById('lb-rows-rising');
-    if (rising) rising.innerHTML = '';
-    const matchups = document.getElementById('lb-matchups');
-    if (matchups) matchups.innerHTML = '';
   }
 
   function renderMatchupsPanel(players) {
@@ -1033,18 +978,12 @@
     el.innerHTML = pairs.map(m => {
       const aWin = m.a.score >= m.b.score;
       return `
-        <div style="display:flex;align-items:center;gap:0.6rem;padding:0.7rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.04)">
-          <div class="lb-player" style="flex:1;min-width:0">
-            <div class="lb-avatar" style="background:${m.a.color}30;border-color:${aWin ? 'var(--green)' : m.a.color}">${avatarInitial(m.a.name)}</div>
-            <span class="lb-name" style="font-size:0.82rem">${m.a.name}</span>
+        <div class="lb-side-row">
+          <div class="lb-side-player">${m.a.is_me ? 'You' : m.a.name}</div>
+          <div class="lb-side-value" style="text-align:center">
+            ${m.a.score.toLocaleString()}<br><span style="color:rgba(255,255,255,0.25)">vs</span><br>${m.b.score.toLocaleString()}
           </div>
-          <div style="font-size:0.78rem;font-weight:800;color:var(--muted);flex-shrink:0;text-align:center;line-height:1.2">
-            ${m.a.score.toLocaleString()}<br><span style="color:rgba(255,255,255,0.2)">vs</span><br>${m.b.score.toLocaleString()}
-          </div>
-          <div class="lb-player" style="flex:1;min-width:0;justify-content:flex-end">
-            <span class="lb-name" style="font-size:0.82rem;text-align:right">${m.b.name}</span>
-            <div class="lb-avatar" style="background:${m.b.color}30;border-color:${!aWin ? 'var(--green)' : m.b.color}">${avatarInitial(m.b.name)}</div>
-          </div>
+          <div class="lb-side-player" style="text-align:right;color:${!aWin ? 'var(--green)' : 'rgba(255,255,255,0.88)'}">${m.b.is_me ? 'You' : m.b.name}</div>
         </div>
       `;
     }).join('');
@@ -1055,55 +994,77 @@
     if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  // ── State ──
-  let activeBoard = 'global';
+  let scopeTab = 'games';
+  let timeTab = 'daily';
+
+  async function loadAllBrackets() {
+    const [today, week, allTime] = await Promise.all([
+      fetchBracket('today'),
+      fetchBracket('week'),
+      fetchBracket('all_time'),
+    ]);
+    return { today, week, all_time: allTime };
+  }
+
+  function rowsForScope(bracket, viewerId) {
+    const hasMe = bracket.some(p => p.is_me);
+    if (hasMe) return bracket;
+    return [
+      ...bracket,
+      {
+        player_id: viewerId,
+        rank: bracket.length + 1,
+        name: 'You',
+        color: '#10B981',
+        score: 0,
+        rank_change: 0,
+        is_me: true,
+        city: '',
+        country: '',
+        last_event: '',
+        local_area: '',
+        last_event_date: '',
+      },
+    ];
+  }
 
   async function refresh() {
-    // City / Teams tabs — coming soon
-    if (activeBoard === 'city' || activeBoard === 'teams') {
-      renderComingSoon(activeBoard === 'city' ? 'City leaderboards coming soon' : 'Team leaderboards coming soon');
-      updateTimestamp();
-      return;
-    }
     try {
-      const count = window.innerWidth <= 600 ? 10 : 15;
-      const [players, rising] = await Promise.all([
-        fetchLeaderboard(activeBoard, count),
-        fetchRising(activeBoard, window.innerWidth <= 600 ? 5 : 8),
-      ]);
-      renderPodium(players);
-      renderRows('lb-rows-left', players, 'full-cols');
-      renderRising(rising);
+      const all = await loadAllBrackets();
+      const period = TIME_TO_PERIOD[timeTab];
+      const bracket = all[period] || [];
+      const players = rowsForScope(bracket, getViewerId());
+
+      renderTableHead(scopeTab);
+      renderRows('lb-rows-left', players, scopeTab);
+      renderRising(players);
       renderMatchupsPanel(players);
       updateTimestamp();
     } catch (err) {
       console.error('Leaderboard fetch error:', err);
       const el = document.getElementById('lb-rows-left');
-      if (el) el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--red)">Failed to load leaderboard</div>';
+      if (el) el.innerHTML = '<div class="lb-empty">Failed to load leaderboard</div>';
     }
   }
 
-  // ── Tab switching ──
-  document.getElementById('lb-tabs').addEventListener('click', e => {
+  document.getElementById('lb-scope-tabs').addEventListener('click', e => {
     const btn = e.target.closest('.lb-tab');
     if (!btn) return;
-    document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#lb-scope-tabs .lb-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    activeBoard = btn.dataset.board;
+    scopeTab = btn.dataset.scope;
     refresh();
   });
 
-  // ── Update column headers (Rank Change instead of Cuts/Area) ──
-  const _areaHeader = document.getElementById('lb-area-header');
-  if (_areaHeader) _areaHeader.textContent = '';
-  const colLabels = document.querySelector('.lb-col-labels.full-cols');
-  if (colLabels) {
-    const spans = colLabels.querySelectorAll('span');
-    if (spans[3]) spans[3].textContent = 'Change';
-    if (spans[4]) spans[4].textContent = '';
-  }
+  document.getElementById('lb-time-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.lb-tab');
+    if (!btn) return;
+    document.querySelectorAll('#lb-time-tabs .lb-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    timeTab = btn.dataset.time;
+    refresh();
+  });
 
-  // ── Initial render + auto-refresh every 30s ──
   refresh();
   setInterval(refresh, 30000);
 })();
