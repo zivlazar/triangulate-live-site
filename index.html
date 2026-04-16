@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triangulate — Real-Time Multiplayer Location Game</title>
+    <meta name="description" content="Form triangles with your team on a live map. Cut and eliminate rival triangles to score points. Download Triangulate now." />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+            --bg: #0a0e1a;
+      --surface: #111827;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --green: #00ff88;
+      --red: #ff3b5c;
+              --text: #e2e8f0;
+              --muted: #8892a4;
+}
+
+    html { scroll-behavior: smooth; }
+
+    body {
+            background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+}
+
+    /* ── NAV ── */
+    nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(10,14,26,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0,229,255,0.08);
+}
+    .nav-logo {
+            display: flex; align-items: center; gap: 0.6rem;
+      font-size: 1.2rem; font-weight: 700; color: var(--accent);
+      text-decoration: none; letter-spacing: 0.04em;
+}
+    .nav-logo svg { width: 28px; height: 28px; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a {
+            color: var(--muted); text-decoration: none; font-size: 0.9rem;
+      transition: color 0.2s;
+}
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+            background: var(--accent); color: #0a0e1a;
+      padding: 0.5rem 1.2rem; border-radius: 6px;
+      font-weight: 700; font-size: 0.9rem; text-decoration: none;
+      transition: opacity 0.2s;
+}
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── HERO ── */
+    .hero {
+            min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+      position: relative; overflow: hidden;
+}
+    .hero-bg {
+            position: absolute; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(124,58,237,0.18) 0%, transparent 70%),
+                          radial-gradient(ellipse 50% 40% at 20% 80%, rgba(0,229,255,0.10) 0%, transparent 60%);
+}
+    canvas#hero-canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      opacity: 0.5; z-index: 0;
+}
+    .hero-content { position: relative; z-index: 1; max-width: 720px; }
+    .badge {
+            display: inline-block;
+      background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.3);
+      color: var(--accent);
+      padding: 0.3rem 0.9rem; border-radius: 999px;
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; margin-bottom: 1.5rem;
+}
+    h1 {
+            font-size: clamp(2.4rem, 6vw, 4.2rem);
+            font-weight: 800; line-height: 1.1;
+      letter-spacing: -0.02em; margin-bottom: 1.2rem;
+        }
+    h1 span { color: var(--accent); }
+    .hero-sub {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: var(--muted); max-width: 520px; margin: 0 auto 2.5rem;
+}
+    .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+          .btn-primary {
+      background: var(--accent); color: #0a0e1a;
+            padding: 0.85rem 2rem; border-radius: 8px;
+      font-weight: 700; font-size: 1rem; text-decoration: none;
+      transition: transform 0.15s, opacity 0.15s;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+}
+    .btn-primary:hover { transform: translateY(-2px); opacity: 0.9; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid rgba(0,229,255,0.35);
+      color: var(--accent);
+      padding: 0.85rem 2rem; border-radius: 8px;
+      font-weight: 600; font-size: 1rem; text-decoration: none;
+      transition: background 0.2s;
+}
+    .btn-secondary:hover { background: rgba(0,229,255,0.07); }
+    .hero-stats {
+            display: flex; gap: 3rem; justify-content: center;
+      margin-top: 4rem; flex-wrap: wrap;
+}
+    .stat { text-align: center; }
+    .stat-num {
+            font-size: 2rem; font-weight: 800; color: var(--accent);
+      display: block; line-height: 1;
+}
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── SECTION COMMON ── */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-title {
+            text-align: center; font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800; margin-bottom: 0.6rem; letter-spacing: -0.01em;
+}
+    .section-sub {
+            text-align: center; color: var(--muted);
+      font-size: 1rem; margin-bottom: 3rem; max-width: 520px; margin-left: auto; margin-right: auto;
+}
+
+    /* ── HOW IT WORKS ── */
+    #how { background: var(--surface); }
+    .steps {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem; margin-top: 3rem;
+    }
+    .step {
+            background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 2rem 1.5rem; text-align: center;
+      position: relative;
+    }
+    .step-num {
+            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--accent2); color: #fff;
+            width: 28px; height: 28px; border-radius: 50%;
+      font-size: 0.8rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+}
+    .step-icon { font-size: 2.4rem; margin-bottom: 1rem; }
+    .step h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { color: var(--muted); font-size: 0.9rem; }
+
+    /* ── LEADERBOARD ── */
+    #leaderboard { background: var(--surface); }
+
+    /* Tab bar */
+    .lb-tabs {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .lb-tab {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .lb-tab:hover { color: var(--text); border-color: rgba(0,229,255,0.3); }
+    .lb-tab.active {
+      background: rgba(0,229,255,0.12);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Live indicator */
+    .lb-live-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .lb-live-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0,255,136,0.08);
+      border: 1px solid rgba(0,255,136,0.25);
+      color: var(--green);
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .lb-live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: lb-pulse 1.4s infinite;
+    }
+    @keyframes lb-pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.4; transform: scale(0.7); }
+    }
+    .lb-updated {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Desktop: side-by-side panels */
+    .lb-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* Podium (top-3 visual) – web only */
+    .lb-podium {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      height: 110px;
+    }
+    .podium-place {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      max-width: 100px;
+    }
+    .podium-avatar {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+      border: 2px solid transparent;
+      flex-shrink: 0;
+    }
+    .podium-name {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 90px;
+    }
+    .podium-score {
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+    .podium-bar {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: rgba(0,0,0,0.5);
+      margin-top: 0.4rem;
+    }
+    .podium-place[data-rank="1"] .podium-bar { height: 70px; background: linear-gradient(160deg, #ffd700, #f59e0b); }
+    .podium-place[data-rank="2"] .podium-bar { height: 52px; background: linear-gradient(160deg, #94a3b8, #64748b); }
+    .podium-place[data-rank="3"] .podium-bar { height: 38px; background: linear-gradient(160deg, #b87333, #92400e); }
+    .podium-place[data-rank="1"] .podium-avatar { background: rgba(255,215,0,0.15); border-color: #ffd700; }
+    .podium-place[data-rank="2"] .podium-avatar { background: rgba(148,163,184,0.15); border-color: #94a3b8; }
+    .podium-place[data-rank="3"] .podium-avatar { background: rgba(184,115,51,0.15); border-color: #b87333; }
+
+    /* Table */
+    .lb-panel {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .lb-panel-header {
+      padding: 1rem 1.2rem 0.75rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lb-panel-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .lb-col-labels {
+      display: grid;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .lb-row {
+      display: grid;
+      padding: 0.7rem 1.2rem;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+      position: relative;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row:hover { background: rgba(255,255,255,0.025); }
+    .lb-row.is-me { background: rgba(0,229,255,0.06); }
+    .lb-row.is-me::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      border-radius: 0 2px 2px 0;
+    }
+    .lb-row.flash-new {
+      animation: lb-flash 0.7s ease-out;
+    }
+    @keyframes lb-flash {
+      0%   { background: rgba(0,229,255,0.18); }
+      100% { background: transparent; }
+    }
+
+    /* Row grid columns: rank / avatar+name / score / (web extras) */
+    .lb-col-labels.full-cols,
+    .lb-row.full-cols {
+      grid-template-columns: 36px 1fr 70px 60px 60px;
+    }
+    .lb-col-labels.compact-cols,
+    .lb-row.compact-cols {
+      grid-template-columns: 36px 1fr 70px;
+    }
+
+    .lb-rank {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
+    }
+    .lb-rank.top1 { color: #ffd700; }
+    .lb-rank.top2 { color: #94a3b8; }
+    .lb-rank.top3 { color: #b87333; }
+
+    .lb-player {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      min-width: 0;
+    }
+    .lb-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(124,58,237,0.3);
+      border: 1px solid rgba(124,58,237,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .lb-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lb-score {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: right;
+    }
+    .lb-cuts {
+      font-size: 0.82rem;
+      color: var(--red);
+      font-weight: 600;
+      text-align: right;
+    }
+    .lb-area {
+      font-size: 0.82rem;
+      color: var(--green);
+      font-weight: 600;
+      text-align: right;
+    }
+    .lb-delta {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-align: right;
+    }
+    .lb-delta.up   { color: var(--green); }
+    .lb-delta.down { color: var(--red); }
+    .lb-delta.same { color: var(--muted); }
+
+    /* Sparkline trend (web only) */
+    .lb-trend svg { display: block; }
+
+    /* Mobile: single compact panel fills width */
+    @media (max-width: 600px) {
+      .lb-layout { grid-template-columns: 1fr; }
+      .lb-podium { display: none; }
+      .lb-panel-right { display: none; }
+      .lb-tabs { gap: 0.35rem; }
+      .lb-tab { padding: 0.38rem 0.85rem; font-size: 0.78rem; }
+    }
+    /* Hide extra cols on mobile */
+    @media (max-width: 600px) {
+      .full-cols { grid-template-columns: 32px 1fr 64px !important; }
+      .lb-cuts, .lb-area { display: none; }
+    }
+    
+    /* ── MAP PREVIEW ── */
+    #preview { background: var(--bg); }
+    .map-mock {
+            position: relative; border-radius: 16px; overflow: hidden;
+      border: 1px solid rgba(0,229,255,0.12);
+      background: #0d1320; max-width: 720px; margin: 0 auto;
+      aspect-ratio: 16/9;
+}
+    canvas#map-canvas { width: 100%; height: 100%; display: block; }
+    .map-overlay {
+            position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 60%, rgba(10,14,26,0.8));
+      pointer-events: none;
+}
+    .map-label {
+            position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.6); border: 1px solid rgba(0,229,255,0.2);
+      color: var(--accent); padding: 0.4rem 1rem; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+    /* ── DOWNLOAD ── */
+    #download { background: var(--surface); }
+    .download-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem; max-width: 640px; margin: 0 auto;
+    }
+    .store-btn {
+            display: flex; align-items: center; gap: 1rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 1.2rem 1.5rem;
+      text-decoration: none; color: var(--text);
+      transition: background 0.2s, border-color 0.2s;
+}
+    .store-btn:hover { background: rgba(0,229,255,0.06); border-color: rgba(0,229,255,0.3); }
+    .store-btn-icon { font-size: 2rem; line-height: 1; }
+    .store-btn-text small { display: block; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .store-btn-text strong { font-size: 1.1rem; font-weight: 700; }
+
+    /* ── FOOTER ── */
+    footer {
+            background: #060810; border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 2.5rem 2rem; text-align: center;
+      color: var(--muted); font-size: 0.85rem;
+}
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 0.8rem 1.2rem; }
+      .nav-links { display: none; }
+      section { padding: 3.5rem 1.2rem; }
+}
+  </style>
+    </head>
+    <body>
+
+    <!-- NAV -->
+    <nav>
+      <a href="#" class="nav-logo">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,3 30,28 2,28" stroke="#00e5ff" stroke-width="2" fill="rgba(0,229,255,0.08)"/>
+          <polygon points="16,9 25,24 7,24" stroke="#7c3aed" stroke-width="1.5" fill="rgba(124,58,237,0.12)"/>
+        </svg>
+        Triangulate
+      </a>
+      <ul class="nav-links">
+        <li><a href="#how">How It Works</a></li>
+    <li><a href="#preview">Live Map</a></li>
+    <li><a href="#leaderboard">Leaderboard</a></li>
+        <li><a href="#download">Download</a></li>
+      </ul>
+      <a href="#download" class="nav-cta">Play Now</a>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-bg"></div>
+      <canvas id="hero-canvas"></canvas>
+      <div class="hero-content">
+        <span class="badge">Real-Time Multiplayer</span>
+            <h1>Form triangles.<br /><span>Claim the map.</span></h1>
+    <p class="hero-sub">
+      Team up with two friends, draw triangles across a live GPS map,
+          and slash through rival formations to dominate the city.
+        </p>
+    <div class="cta-group">
+      <a href="#download" class="btn-primary">
+            <span>&#9660;</span> Download Free
+      </a>
+          <a href="#how" class="btn-secondary">How It Works</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-num">3v3</span><span class="stat-label">Team Format</span></div>
+          <div class="stat"><span class="stat-num">GPS</span><span class="stat-label">Live Location</span></div>
+          <div class="stat"><span class="stat-num">&#8734;</span><span class="stat-label">Replayability</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how">
+      <div class="container">
+        <h2 class="section-title">How It Works</h2>
+    <p class="section-sub">Simple rules, deep strategy — played out across your real neighbourhood.</p>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-icon">&#128101;</div>
+            <h3>Form a Team</h3>
+        <p>Join or create a lobby with two teammates. Each player becomes a vertex of your triangle.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-icon">&#128205;</div>
+            <h3>Move on the Map</h3>
+            <p>Walk, run, or cycle around your city. Your real GPS position updates live on the shared map.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-icon">&#9651;</div>
+            <h3>Form Triangles</h3>
+            <p>Your team's three positions automatically form a triangle. The bigger the area, the more territory you own.</p>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-icon">&#9889;</div>
+            <h3>Cut &amp; Score</h3>
+            <p>When your triangle's edge crosses through a rival triangle, it scores a cut — shrink them to zero to eliminate.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEADERBOARD -->
+  <section id="leaderboard">
+    <div class="container">
+      <h2 class="section-title">Leaderboard</h2>
+      <p class="section-sub">Live rankings across all active boards — updated every few seconds.</p>
+
+      <!-- Live status bar -->
+      <div class="lb-live-bar">
+        <span class="lb-live-pill"><span class="lb-live-dot"></span>Live</span>
+        <span class="lb-updated" id="lb-updated-text">Updating…</span>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="lb-tabs" id="lb-tabs">
+        <button class="lb-tab active" data-board="global">🌍 Global</button>
+        <button class="lb-tab" data-board="weekly">📅 This Week</button>
+        <button class="lb-tab" data-board="city">🏙 City</button>
+        <button class="lb-tab" data-board="teams">⚡ Teams</button>
+      </div>
+
+      <!-- Desktop: podium + full table  /  Mobile: compact table only -->
+      <div class="lb-layout" id="lb-layout">
+
+        <!-- LEFT: podium + full ranked table -->
+        <div>
+          <div class="lb-podium" id="lb-podium">
+            <!-- filled by JS -->
+          </div>
+          <div class="lb-panel">
+            <div class="lb-panel-header">
+              <span class="lb-panel-title" id="lb-left-title">Top Players</span>
+            </div>
+            <div class="lb-col-labels full-cols">
+              <span style="text-align:center">#</span>
+              <span>Player</span>
+              <span style="text-align:right">Score</span>
+              <span style="text-align:right">Cuts</span>
+              <span style="text-align:right" id="lb-area-header">Area</span>
+            </div>
+            <div id="lb-rows-left"><!-- filled by JS --></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: secondary panel (web only) — rival matchups / rising players -->
+        <div class="lb-panel-right">
+          <div class="lb-panel" style="margin-bottom:1.5rem">
+            <div class="lb-panel-header">
+              <span class="lb-panel-title">🔥 Rising Fast</span>
+            </div>
+            <div class="lb-col-labels compact-cols">
+              <span style="text-align:center">#</span>
+              <span>Player</span>
+              <span style="text-align:right">+Pts</span>
+            </div>
+            <div id="lb-rows-rising"><!-- filled by JS --></div>
+          </div>
+          <div class="lb-panel">
+            <div class="lb-panel-header">
+              <span class="lb-panel-title">⚔️ Rival Matchups</span>
+            </div>
+            <div id="lb-matchups"><!-- filled by JS --></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+<!-- LIVE MAP PREVIEW -->
+    <section id="preview">
+      <div class="container">
+        <h2 class="section-title">See It Live</h2>
+    <p class="section-sub">A simulated match — green team vs. red bots, battling for map control.</p>
+    <div class="map-mock">
+      <canvas id="map-canvas"></canvas>
+      <div class="map-overlay"></div>
+      <div class="map-label">Live Simulation</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section id="download">
+      <div class="container">
+        <h2 class="section-title">Download Triangulate</h2>
+        <p class="section-sub">Free to play. Available on iOS and Android.</p>
+    <div class="download-grid">
+      <a href="#" class="store-btn">
+            <span class="store-btn-icon">&#63743;</span>
+            <div class="store-btn-text">
+              <small>Download on the</small>
+          <strong>App Store</strong>
+        </div>
+          </a>
+          <a href="#" class="store-btn">
+            <span class="store-btn-icon">&#9654;</span>
+            <div class="store-btn-text">
+              <small>Get it on</small>
+          <strong>Google Play</strong>
+        </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>
+        &copy; 2026 Triangulate &mdash;
+    <a href="https://github.com/zivlazar/triangulate-game" target="_blank" rel="noopener">GitHub</a>
+          &nbsp;&bull;&nbsp;
+    <a href="mailto:hello@triangulate.live">Contact</a>
+  </p>
+</footer>
+
+<script>
+// ── Hero canvas: animated floating triangles ──
+(function () {
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, tris = [];
+
+  function resize() {
+        W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+
+  function randBetween(a, b) { return a + Math.random() * (b - a); }
+
+  function mkTri() {
+        const cx = randBetween(0, W);
+    const cy = randBetween(0, H);
+    const r = randBetween(20, 80);
+    const angle = Math.random() * Math.PI * 2;
+    const speed = randBetween(0.15, 0.45);
+    const rotSpeed = randBetween(-0.004, 0.004);
+    const alpha = randBetween(0.06, 0.22);
+    const hue = Math.random() < 0.5 ? '#00e5ff' : '#7c3aed';
+    return { cx, cy, r, angle, speed, rotSpeed, alpha, hue, dir: Math.random() * Math.PI * 2 };
+}
+
+  function initTris() {
+        tris = [];
+    const count = Math.floor((W * H) / 28000) + 8;
+    for (let i = 0; i < count; i++) tris.push(mkTri());
+  }
+
+  function drawTri(t) {
+        ctx.save();
+    ctx.translate(t.cx, t.cy);
+    ctx.rotate(t.angle);
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.cos(a) * t.r;
+      const y = Math.sin(a) * t.r;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = t.hue;
+    ctx.globalAlpha = t.alpha;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function update() {
+        tris.forEach(t => {
+      t.cx += Math.cos(t.dir) * t.speed;
+      t.cy += Math.sin(t.dir) * t.speed;
+      t.angle += t.rotSpeed;
+      if (t.cx < -t.r) t.cx = W + t.r;
+      if (t.cx > W + t.r) t.cx = -t.r;
+      if (t.cy < -t.r) t.cy = H + t.r;
+      if (t.cy > H + t.r) t.cy = -t.r;
+  });
+}
+
+  let animId;
+  function loop() {
+        ctx.clearRect(0, 0, W, H);
+    tris.forEach(drawTri);
+    update();
+    animId = requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize', () => { resize(); initTris(); });
+  resize(); initTris(); loop();
+                      })();
+
+// ── Map canvas: animated match simulation ──
+(function () {
+  const canvas = document.getElementById('map-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+
+  function resize() {
+    W = canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    H = canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    canvas.style.width = canvas.offsetWidth + 'px';
+    canvas.style.height = canvas.offsetHeight + 'px';
+}
+
+  // Draw a simple grid background resembling a map
+  function drawGrid() {
+    const lw = canvas.offsetWidth, lh = canvas.offsetHeight;
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    const step = 40;
+    for (let x = 0; x < lw; x += step) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, lh); ctx.stroke();
+}
+    for (let y = 0; y < lh; y += step) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(lw, y); ctx.stroke();
+}
+    // "roads"
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 2;
+    [[0, lh*0.45, lw, lh*0.45], [lw*0.3, 0, lw*0.3, lh], [lw*0.7, 0, lw*0.7, lh], [0, lh*0.75, lw, lh*0.75]].forEach(([x1,y1,x2,y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+});
+}
+
+  let t = 0;
+  const LW = () => canvas.offsetWidth, LH = () => canvas.offsetHeight;
+
+  // Player (green) team
+  function greenPos(i) {
+    const ox = LW() * 0.35, oy = LH() * 0.45;
+    const r = 70 + i * 20;
+    const a = t * 0.008 + i * 2.1;
+    return { x: ox + Math.cos(a) * r, y: oy + Math.sin(a) * r * 0.6 };
+}
+
+  // Red bot team
+  function redPos(i) {
+    const ox = LW() * 0.65, oy = LH() * 0.52;
+    const r = 60 + i * 18;
+    const a = -t * 0.007 + i * 2.09;
+    return { x: ox + Math.cos(a) * r, y: oy + Math.sin(a) * r * 0.55 };
+}
+
+  function drawTeam(getPos, color, glowColor, pulseOffset) {
+    const lw = LW(), lh = LH();
+    const pts = [getPos(0), getPos(1), getPos(2)];
+
+    // Draw filled triangle
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.lineTo(pts[2].x, pts[2].y);
+    ctx.closePath();
+    ctx.fillStyle = color.replace('1)', '0.08)');
+    ctx.fill();
+
+    // Glowing edge
+    const pulse = 0.6 + 0.4 * Math.sin(t * 0.05 + pulseOffset);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5 + pulse;
+    ctx.globalAlpha = 0.6 + 0.3 * pulse;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Player dots
+    pts.forEach((p, idx) => {
+            // Outer glow
+            const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 16);
+            grad.addColorStop(0, glowColor);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dot
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.9;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+}
+
+  function frame() {
+    const lw = LW(), lh = LH();
+    ctx.clearRect(0, 0, lw, lh);
+    drawGrid();
+    drawTeam(redPos, 'rgba(255,59,92,1)', 'rgba(255,59,92,0.3)', 1.5);
+    drawTeam(greenPos, 'rgba(0,255,136,1)', 'rgba(0,255,136,0.3)', 0);
+    t++;
+    requestAnimationFrame(frame);
+}
+
+  const ro = new ResizeObserver(() => {
+    canvas.style.width = ''; canvas.style.height = '';
+});
+  ro.observe(canvas.parentElement);
+
+  frame();
+})();
+
+// ── Leaderboard — live from Supabase ──
+(function () {
+  const SUPABASE_URL = 'https://rgczribfoutvpashjgrx.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnY3pyaWJmb3V0dnBhc2hqZ3J4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwMTEzMjIsImV4cCI6MjA5MTU4NzMyMn0.sAp2ao4iH8xeV9Q-MvYBfhK9T8NSbe_D61e127VWAiE';
+
+  // ── Supabase REST helper ──
+  async function sbQuery(table, params) {
+    const url = new URL(`${SUPABASE_URL}/rest/v1/${table}`);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const res = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    });
+    if (!res.ok) throw new Error(`Supabase ${res.status}`);
+    return res.json();
+  }
+
+  // ── Period → column mapping ──
+  const PERIOD_MAP = {
+    global: { score: 'score_all_time', rank: 'rank_all_time' },
+    weekly: { score: 'score_week',     rank: 'rank_week' },
+  };
+
+  // ── Fetch leaderboard from Supabase ──
+  async function fetchLeaderboard(period, limit) {
+    const cols = PERIOD_MAP[period];
+    if (!cols) return []; // city/teams not yet supported
+    const data = await sbQuery('player_profiles', {
+      select: `player_id,nickname,color,${cols.score},${cols.rank},rank_change`,
+      [`${cols.score}`]: 'gt.0',
+      order: `${cols.rank}.asc`,
+      limit: String(limit),
+    });
+    return data.map(row => ({
+      rank: row[cols.rank] ?? 999,
+      name: row.nickname || 'Unknown',
+      color: row.color || '#7c3aed',
+      score: row[cols.score] || 0,
+      rank_change: row.rank_change || 0,
+    }));
+  }
+
+  // ── Fetch rising players (biggest rank_change in current period) ──
+  async function fetchRising(period, limit) {
+    const cols = PERIOD_MAP[period];
+    if (!cols) return [];
+    const data = await sbQuery('player_profiles', {
+      select: `nickname,color,${cols.rank},rank_change`,
+      'rank_change': 'gt.0',
+      [`${cols.score}`]: 'gt.0',
+      order: 'rank_change.desc',
+      limit: String(limit),
+    });
+    return data.map(row => ({
+      rank: row[cols.rank] ?? 0,
+      name: row.nickname || 'Unknown',
+      color: row.color || '#7c3aed',
+      gain: row.rank_change || 0,
+    }));
+  }
+
+  // ── Rendering helpers ──
+  function rankClass(r) {
+    if (r === 1) return 'top1';
+    if (r === 2) return 'top2';
+    if (r === 3) return 'top3';
+    return '';
+  }
+
+  function avatarInitial(name) {
+    return (name || '?')[0].toUpperCase();
+  }
+
+  function renderPodium(players) {
+    const podium = document.getElementById('lb-podium');
+    if (!podium) return;
+    if (players.length < 3) { podium.innerHTML = ''; return; }
+    const order = [players[1], players[0], players[2]];
+    const ranks = [2, 1, 3];
+    podium.innerHTML = order.map((p, i) => `
+      <div class="podium-place" data-rank="${ranks[i]}">
+        <div class="podium-avatar" style="background:${p.color}22;border-color:${p.color}">${avatarInitial(p.name)}</div>
+        <div class="podium-name">${p.name}</div>
+        <div class="podium-score">${p.score.toLocaleString()}</div>
+        <div class="podium-bar">${ranks[i]}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderRows(containerId, players, colClass) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (players.length === 0) {
+      el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted)">No players ranked yet</div>';
+      return;
+    }
+    el.innerHTML = players.map(p => {
+      const changeStr = p.rank_change > 0 ? `+${p.rank_change}` : p.rank_change < 0 ? String(p.rank_change) : '–';
+      const changeClass = p.rank_change > 0 ? 'up' : p.rank_change < 0 ? 'down' : 'same';
+      return `
+        <div class="lb-row ${colClass}" data-name="${p.name}" data-rank="${p.rank}">
+          <span class="lb-rank ${rankClass(p.rank)}">${p.rank}</span>
+          <div class="lb-player">
+            <div class="lb-avatar" style="background:${p.color}30;border-color:${p.color}">${avatarInitial(p.name)}</div>
+            <span class="lb-name">${p.name}</span>
+          </div>
+          <span class="lb-score">${p.score.toLocaleString()}</span>
+          <span class="lb-cuts lb-delta ${changeClass}">${changeStr}</span>
+          <span class="lb-area" style="color:${p.color}">${avatarInitial(p.name)}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderRising(players) {
+    const el = document.getElementById('lb-rows-rising');
+    if (!el) return;
+    if (players.length === 0) {
+      el.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.82rem">No movers yet</div>';
+      return;
+    }
+    el.innerHTML = players.map(p => `
+      <div class="lb-row compact-cols">
+        <span class="lb-rank">${p.rank}</span>
+        <div class="lb-player">
+          <div class="lb-avatar" style="background:${p.color}30;border-color:${p.color}">${avatarInitial(p.name)}</div>
+          <span class="lb-name">${p.name}</span>
+        </div>
+        <span class="lb-score" style="color:var(--green)">▲${p.gain}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderComingSoon(msg) {
+    const left = document.getElementById('lb-rows-left');
+    if (left) left.innerHTML = `<div style="padding:3rem 1rem;text-align:center;color:var(--muted)"><div style="font-size:1.6rem;margin-bottom:0.5rem">🚧</div>${msg}</div>`;
+    const podium = document.getElementById('lb-podium');
+    if (podium) podium.innerHTML = '';
+    const rising = document.getElementById('lb-rows-rising');
+    if (rising) rising.innerHTML = '';
+    const matchups = document.getElementById('lb-matchups');
+    if (matchups) matchups.innerHTML = '';
+  }
+
+  function renderMatchupsPanel(players) {
+    const el = document.getElementById('lb-matchups');
+    if (!el) return;
+    // Show closest-score pairs as "rivalries"
+    if (players.length < 2) { el.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);font-size:0.82rem">Not enough players</div>'; return; }
+    const pairs = [];
+    for (let i = 0; i < Math.min(players.length - 1, 4); i++) {
+      pairs.push({ a: players[i], b: players[i + 1] });
+    }
+    el.innerHTML = pairs.map(m => {
+      const aWin = m.a.score >= m.b.score;
+      return `
+        <div style="display:flex;align-items:center;gap:0.6rem;padding:0.7rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.04)">
+          <div class="lb-player" style="flex:1;min-width:0">
+            <div class="lb-avatar" style="background:${m.a.color}30;border-color:${aWin ? 'var(--green)' : m.a.color}">${avatarInitial(m.a.name)}</div>
+            <span class="lb-name" style="font-size:0.82rem">${m.a.name}</span>
+          </div>
+          <div style="font-size:0.78rem;font-weight:800;color:var(--muted);flex-shrink:0;text-align:center;line-height:1.2">
+            ${m.a.score.toLocaleString()}<br><span style="color:rgba(255,255,255,0.2)">vs</span><br>${m.b.score.toLocaleString()}
+          </div>
+          <div class="lb-player" style="flex:1;min-width:0;justify-content:flex-end">
+            <span class="lb-name" style="font-size:0.82rem;text-align:right">${m.b.name}</span>
+            <div class="lb-avatar" style="background:${m.b.color}30;border-color:${!aWin ? 'var(--green)' : m.b.color}">${avatarInitial(m.b.name)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateTimestamp() {
+    const el = document.getElementById('lb-updated-text');
+    if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  // ── State ──
+  let activeBoard = 'global';
+
+  async function refresh() {
+    // City / Teams tabs — coming soon
+    if (activeBoard === 'city' || activeBoard === 'teams') {
+      renderComingSoon(activeBoard === 'city' ? 'City leaderboards coming soon' : 'Team leaderboards coming soon');
+      updateTimestamp();
+      return;
+    }
+    try {
+      const count = window.innerWidth <= 600 ? 10 : 15;
+      const [players, rising] = await Promise.all([
+        fetchLeaderboard(activeBoard, count),
+        fetchRising(activeBoard, window.innerWidth <= 600 ? 5 : 8),
+      ]);
+      renderPodium(players);
+      renderRows('lb-rows-left', players, 'full-cols');
+      renderRising(rising);
+      renderMatchupsPanel(players);
+      updateTimestamp();
+    } catch (err) {
+      console.error('Leaderboard fetch error:', err);
+      const el = document.getElementById('lb-rows-left');
+      if (el) el.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--red)">Failed to load leaderboard</div>';
+    }
+  }
+
+  // ── Tab switching ──
+  document.getElementById('lb-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.lb-tab');
+    if (!btn) return;
+    document.querySelectorAll('.lb-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeBoard = btn.dataset.board;
+    refresh();
+  });
+
+  // ── Update column headers (Rank Change instead of Cuts/Area) ──
+  const _areaHeader = document.getElementById('lb-area-header');
+  if (_areaHeader) _areaHeader.textContent = '';
+  const colLabels = document.querySelector('.lb-col-labels.full-cols');
+  if (colLabels) {
+    const spans = colLabels.querySelectorAll('span');
+    if (spans[3]) spans[3].textContent = 'Change';
+    if (spans[4]) spans[4].textContent = '';
+  }
+
+  // ── Initial render + auto-refresh every 30s ──
+  refresh();
+  setInterval(refresh, 30000);
+})();
+
+</script>
+  </body>
+  </html>
