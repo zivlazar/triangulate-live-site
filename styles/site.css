@@ -1970,6 +1970,7 @@ body[data-page="events"] .events-grid--listing .event-card {
 
 @media (max-width: 1080px) {
   .hero-grid,
+  body[data-page="home"] .hero-grid,
   .instant-start-wrap,
   .cta-shell,
   .leaderboard-grid,
@@ -1979,6 +1980,10 @@ body[data-page="events"] .events-grid--listing .event-card {
   .analytics-banner {
     grid-template-columns: 1fr;
   }
+
+  /* On mobile/tablet, show the hero image above the text */
+  .hero-grid .hero-media { order: 1; }
+  .hero-grid .hero-copy  { order: 2; }
 
   .feature-grid,
   .steps-grid {
