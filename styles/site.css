@@ -1000,7 +1000,7 @@ body[data-page="home"] .hero-overlay-card {
 }
 
 .page-hero {
-  padding-top: 4rem;
+  padding-top: 1.5rem;
   padding-bottom: 2rem;
   background:
     radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.42), transparent 15%),
