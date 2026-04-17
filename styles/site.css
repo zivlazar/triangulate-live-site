@@ -557,7 +557,7 @@ body[data-page="home"] .hero-overlay-card {
 }
 
 .media-visual--card {
-  padding: 1rem 1rem 7.5rem;
+  padding: 1rem 1rem 6rem;
   align-items: flex-start;
 }
 
@@ -810,7 +810,7 @@ body[data-page="home"] .hero-overlay-card {
 }
 
 .media-poster--card {
-  width: min(86%, 308px);
+  width: min(96%, 420px);
   transform: rotate(-6deg) translateY(0.5rem);
 }
 
