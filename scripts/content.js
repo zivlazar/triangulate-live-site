@@ -357,7 +357,7 @@ export const audienceCards = [
     description:
       "Great for away days and socials that need movement, teamwork, and a simple format people get quickly.",
     ctaLabel: "Plan a team event",
-    href: "mailto:hello@triangulate.live?subject=Triangulate%20team%20event",
+    href: "./contact.html",
     sceneClass: "teams",
   },
 ];
