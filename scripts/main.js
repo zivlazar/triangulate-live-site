@@ -163,11 +163,9 @@ function currentArtworkMarkup(mode = "card", variant = "default") {
   const lazyMode = mode === "hero" ? "eager" : "lazy";
   const imageSrc = VISUAL_SOURCES[variant] || VISUAL_SOURCES.default;
   const imageAlt = VISUAL_ALTS[variant] || VISUAL_ALTS.default;
-  const animatedBackdrop = triangleBackdropMarkup(variant);
 
   return `
     <div class="media-visual media-visual--${mode} media-visual--${variant}">
-      ${animatedBackdrop}
       <div class="media-visual__halo" aria-hidden="true"></div>
       <figure class="media-poster media-poster--${mode}">
         <img src="${imageSrc}" alt="${imageAlt}" loading="${lazyMode}" decoding="async" />
