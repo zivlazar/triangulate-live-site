@@ -95,6 +95,7 @@ function bindContactForm() {
       responseConsent: String(formData.get("responseConsent") || "") === "on",
       sourcePage: window.location.pathname,
       referrer: document.referrer || "",
+      _hp: String(formData.get("_hp") || ""),
       trackingContext: getTrackingContext(),
     };
 

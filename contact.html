@@ -60,6 +60,11 @@
             <div class="contact-layout">
               <section class="contact-panel">
                 <form class="contact-form" id="contact-form" novalidate>
+                  <div class="contact-form__honeypot" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+                    <label>Leave this field blank
+                      <input type="text" name="_hp" tabindex="-1" autocomplete="off" />
+                    </label>
+                  </div>
                   <div class="contact-form__grid">
                     <label class="contact-field">
                       <span>Name *</span>
