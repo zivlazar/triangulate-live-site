@@ -2089,8 +2089,13 @@ body[data-page="events"] .events-grid--listing .event-card {
   }
 
   .site-nav a {
-    padding: 0.6rem 0.4rem;
+    padding: 0.75rem 0.9rem;
     border-radius: 12px;
+    color: var(--navy-deep);
+  }
+
+  .site-nav a:hover {
+    background: rgba(82, 216, 255, 0.14);
   }
 
   .contact-form__grid {
