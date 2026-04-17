@@ -1719,7 +1719,7 @@ body[data-page="events"] .events-grid--listing .event-card {
   position: relative;
   overflow: hidden;
   border-radius: 34px;
-  min-height: 340px;
+  min-height: 520px;
 }
 
 .audience-card__media {
