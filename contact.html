@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triangulate | Contact us</title>
+    <meta
+      name="description"
+      content="Contact Triangulate about feedback, team sessions, product questions, or anything else."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="./assets/app/favicon.png" />
+    <link rel="stylesheet" href="./styles/site.css" />
+  </head>
+  <body data-page="contact">
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container nav-shell">
+          <a class="brand" href="./index.html" aria-label="Triangulate home">
+            <img src="./assets/brand-mark.svg" alt="" width="34" height="34" />
+            <span>Triangulate</span>
+          </a>
+          <nav class="site-nav" aria-label="Primary">
+            <a href="./index.html">Home</a>
+            <a href="./events.html">Events</a>
+            <a href="./teams.html">Teams</a>
+            <a href="./leaderboard.html">Leaderboard</a>
+            <a class="is-active" href="./contact.html">Contact</a>
+          </nav>
+          <a class="button button--dark" href="./events.html">Start a game</a>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-hero">
+          <div class="container page-hero__grid">
+            <div class="section-heading section-heading--left">
+              <p class="eyebrow">Contact us</p>
+              <h1 class="page-title">Send Triangulate a message</h1>
+              <p>
+                Use the form below for feedback, event questions, team sessions, partnerships, or anything
+                else you want to ask. We’ll email you a confirmation as soon as your message is received.
+              </p>
+            </div>
+            <div class="page-hero__card">
+              <p class="panel-label">What happens next</p>
+              <h3>Stored, emailed, and confirmed</h3>
+              <p>Your submission is stored in our website feedback system, sent to hello@triangulate.live, and followed by a confirmation email to you.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="instant-start-section">
+          <div class="container">
+            <div class="contact-layout">
+              <section class="contact-panel">
+                <form class="contact-form" id="contact-form" novalidate>
+                  <div class="contact-form__grid">
+                    <label class="contact-field">
+                      <span>Name *</span>
+                      <input type="text" name="name" maxlength="120" required />
+                    </label>
+                    <label class="contact-field">
+                      <span>Email *</span>
+                      <input type="email" name="email" maxlength="160" required />
+                    </label>
+                    <label class="contact-field">
+                      <span>Phone number</span>
+                      <input type="tel" name="phoneNumber" maxlength="40" autocomplete="tel" />
+                    </label>
+                    <label class="contact-field">
+                      <span>Company name</span>
+                      <input type="text" name="companyName" maxlength="160" autocomplete="organization" />
+                    </label>
+                  </div>
+
+                  <label class="contact-field contact-field--full">
+                    <span>Your query *</span>
+                    <textarea id="contact-query" name="query" rows="8" maxlength="5000" required></textarea>
+                    <small id="contact-word-count" class="contact-field__hint">0/500 words</small>
+                  </label>
+
+                  <label class="contact-checkbox">
+                    <input type="checkbox" name="responseConsent" required />
+                    <span>I consent to Triangulate storing these details and contacting me about this enquiry. *</span>
+                  </label>
+
+                  <label class="contact-checkbox">
+                    <input type="checkbox" id="contact-analytics-consent" name="analyticsConsent" />
+                    <span>I consent to website analytics for this enquiry and, if a Triangulate player ID is already present on this device, to using that ID to connect web and app activity.</span>
+                  </label>
+
+                  <p class="contact-form__privacy">
+                    We do not use your phone number as an automatic tracking identifier. See the
+                    <a href="./privacy-policy.html">Privacy policy</a> for details.
+                  </p>
+
+                  <div class="contact-form__actions">
+                    <button class="button button--primary" type="submit">Send message</button>
+                    <p class="contact-form__status" id="contact-form-status" aria-live="polite">
+                      Complete the form and we’ll send a confirmation email to you.
+                    </p>
+                  </div>
+                </form>
+              </section>
+
+              <aside class="contact-panel contact-panel--aside">
+                <div class="stack-card__item">
+                  <strong>Email</strong>
+                  <p><a href="mailto:hello@triangulate.live">hello@triangulate.live</a></p>
+                </div>
+                <div class="stack-card__item">
+                  <strong>Good for</strong>
+                  <p>Feedback, partnerships, school sessions, company away days, and event questions.</p>
+                </div>
+                <div class="stack-card__item">
+                  <strong>Consent-first analytics</strong>
+                  <p>We only connect website and app behaviour when you explicitly agree and a Triangulate player ID is already available on this device.</p>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-shell">
+          <div>
+            <a class="brand brand--footer" href="./index.html">
+              <img src="./assets/brand-mark.svg" alt="" width="30" height="30" />
+              <span>Triangulate</span>
+            </a>
+            <p class="footer-copy">Outdoor team play built around movement, shape, and smart decisions.</p>
+          </div>
+          <div class="footer-links">
+            <a href="./events.html">Events</a>
+            <a href="./teams.html">Teams</a>
+            <a href="./leaderboard.html">Leaderboard</a>
+            <a href="./contact.html">Contact</a>
+            <a href="./privacy-policy.html">Privacy policy</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="./scripts/contact.js"></script>
+  </body>
+</html>
