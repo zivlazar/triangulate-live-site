@@ -2088,10 +2088,16 @@ body[data-page="events"] .events-grid--listing .event-card {
     display: flex;
   }
 
-  .site-nav a {
+  .site-nav a,
+  .site-nav a.is-active {
     padding: 0.75rem 0.9rem;
     border-radius: 12px;
-    color: var(--navy-deep);
+    color: var(--navy-deep) !important;
+    background: transparent;
+  }
+
+  .site-nav a.is-active {
+    background: rgba(82, 216, 255, 0.14);
   }
 
   .site-nav a:hover {
