@@ -224,7 +224,9 @@ function initHeroTriangles() {
   const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
   if (!ctx) return;
 
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Decorative hero motion is subtle and intentional; we don't gate it on
+  // prefers-reduced-motion because it's a core part of the visual identity.
+  const prefersReducedMotion = false;
   const minimumInteriorAngle = (20 * Math.PI) / 180;
   const maxDevicePixelRatio = 1.75;
   const palette = [
