@@ -994,6 +994,11 @@ body[data-page="home"] .hero-overlay-card {
   font-size: clamp(2.2rem, 4.8vw, 4rem);
 }
 
+/* Push page-hero eyebrow pill higher so it's not crowding the page title */
+.page-hero .eyebrow {
+  margin-bottom: 1.8rem;
+}
+
 .page-hero {
   padding-top: 4rem;
   padding-bottom: 2rem;
