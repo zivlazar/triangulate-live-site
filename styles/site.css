@@ -310,8 +310,9 @@ a {
   padding: 5rem 0;
 }
 
-.hero-section {
-  padding-top: 4.8rem;
+.hero-section,
+.page-hero {
+  padding-top: 2.2rem;
   padding-bottom: 4rem;
 }
 
