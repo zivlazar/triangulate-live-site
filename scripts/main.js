@@ -91,13 +91,6 @@ function escapeHtml(value) {
   });
 }
 
-function escapeCssUrl(value) {
-  return encodeURI(String(value ?? ""))
-    .replace(/'/g, "%27")
-    .replace(/\(/g, "%28")
-    .replace(/\)/g, "%29");
-}
-
 function updatedTimeLabel(date) {
   if (!(date instanceof Date)) return "Waiting for live data";
   return `Updated ${date.toLocaleTimeString("en-GB", {
@@ -745,20 +738,33 @@ function eventCardMarkup(event) {
   const surfaceClass = surfaceClassForEvent(event);
   const hasPhoto = Boolean(event.meeting_point_photo_url);
   const showDistance = hasViewerLocation();
-  const photoStyle = hasPhoto
-    ? ` style="--event-photo-image: url('${escapeCssUrl(event.meeting_point_photo_url)}');"`
-    : "";
 
   return `
-    <article class="event-card event-card--live${hasPhoto ? " event-card--with-photo" : ""}"${photoStyle}>
+    <article class="event-card event-card--live${hasPhoto ? " event-card--with-photo" : ""}">
       ${
-        !hasPhoto
+        hasPhoto
           ? `
+            <img
+              class="event-card__bg-image"
+              src="${escapeHtml(event.meeting_point_photo_url)}"
+              alt="${escapeHtml(placeLabel(event))}"
+              loading="lazy"
+              decoding="async"
+              referrerpolicy="no-referrer"
+            />
+          `
+          : `
             <div class="event-card__backdrop event-card__backdrop--${surfaceClass}">
               <div class="event-card__fallback-visual event-card__fallback-visual--backdrop">
                 ${eventGraphicMarkup({ sceneClass: surfaceClass, scope: "city", timeframe: "week" }, "event")}
               </div>
             </div>
+          `
+      }
+      ${
+        hasPhoto
+          ? `
+            <div class="event-card__photo-overlay" aria-hidden="true"></div>
           `
           : ""
       }
