@@ -91,6 +91,13 @@ function escapeHtml(value) {
   });
 }
 
+function escapeCssUrl(value) {
+  return encodeURI(String(value ?? ""))
+    .replace(/'/g, "%27")
+    .replace(/\(/g, "%28")
+    .replace(/\)/g, "%29");
+}
+
 function updatedTimeLabel(date) {
   if (!(date instanceof Date)) return "Waiting for live data";
   return `Updated ${date.toLocaleTimeString("en-GB", {
@@ -735,38 +742,27 @@ function eventDetailsMarkup(event) {
 
 function eventCardMarkup(event) {
   const isExpanded = eventState.expandedEventId === event.id;
-  const isRecent = isRecentEvent(event);
   const surfaceClass = surfaceClassForEvent(event);
   const hasPhoto = Boolean(event.meeting_point_photo_url);
   const showDistance = hasViewerLocation();
+  const photoStyle = hasPhoto
+    ? ` style="--event-photo-image: url('${escapeCssUrl(event.meeting_point_photo_url)}');"`
+    : "";
 
   return `
-    <article class="event-card event-card--live">
-      <div class="event-card__backdrop event-card__backdrop--${surfaceClass}${hasPhoto ? " event-card__backdrop--photo" : ""}">
-        ${
-          hasPhoto
-            ? `
-              <img
-                class="event-card__image"
-                src="${escapeHtml(event.meeting_point_photo_url)}"
-                alt="${escapeHtml(placeLabel(event))}"
-                loading="lazy"
-                decoding="async"
-                referrerpolicy="no-referrer"
-              />
-            `
-            : `
+    <article class="event-card event-card--live${hasPhoto ? " event-card--with-photo" : ""}"${photoStyle}>
+      ${
+        !hasPhoto
+          ? `
+            <div class="event-card__backdrop event-card__backdrop--${surfaceClass}">
               <div class="event-card__fallback-visual event-card__fallback-visual--backdrop">
                 ${eventGraphicMarkup({ sceneClass: surfaceClass, scope: "city", timeframe: "week" }, "event")}
               </div>
-            `
-        }
-      </div>
+            </div>
+          `
+          : ""
+      }
       <div class="event-card__content event-card__content--live">
-        <div class="event-card__topline">
-          <span class="player-chip">${escapeHtml(event.team_name || "Live event")}</span>
-          <span class="status-pill" data-status="${isRecent ? "recent" : "upcoming"}">${escapeHtml(timeLabel(event))}</span>
-        </div>
         <div class="event-card__title-group">
           <h3>${escapeHtml(event.title)}</h3>
           <p>${escapeHtml(placeLabel(event))}</p>
@@ -791,7 +787,6 @@ function eventCardMarkup(event) {
           <button class="button button--secondary" type="button" data-event-toggle="${event.id}">
             ${isExpanded ? "Hide details" : "See details"}
           </button>
-          <span class="panel-meta">Posted from the app</span>
         </div>
         ${isExpanded ? eventDetailsMarkup(event) : ""}
       </div>
