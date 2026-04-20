@@ -1535,24 +1535,36 @@ body[data-page="events"] .events-grid--listing .event-card {
 }
 
 .event-card--live {
-  min-height: 0;
+  min-height: 480px;
+  align-items: end;
   background: rgba(255, 255, 255, 0.88);
 }
 
-.event-card--live .event-card__media {
-  min-height: 240px;
-  padding: 0;
-  border-radius: 30px 30px 0 0;
-  border-bottom: none;
+.event-card__backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 
-.event-card__media--live {
-  min-height: 240px;
-}
-
-.event-card__media--photo::before,
-.event-card__media--photo::after {
+.event-card__backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   z-index: 1;
+  background:
+    radial-gradient(circle at 18% 76%, rgba(245, 241, 232, 0.26), transparent 19%),
+    radial-gradient(circle at 48% 38%, rgba(255, 255, 255, 0.16), transparent 22%),
+    radial-gradient(circle at 82% 70%, rgba(22, 212, 223, 0.14), transparent 22%);
+}
+
+.event-card__backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(6, 37, 86, 0.14) 0%, rgba(6, 37, 86, 0.28) 38%, rgba(6, 37, 86, 0.88) 100%),
+    radial-gradient(circle at 82% 22%, rgba(255, 213, 76, 0.16), transparent 22%);
 }
 
 .event-card__image {
@@ -1572,13 +1584,8 @@ body[data-page="events"] .events-grid--listing .event-card {
   z-index: 0;
 }
 
-.event-card__media--photo::after {
-  height: 60%;
-  background:
-    linear-gradient(180deg, transparent 0%, rgba(17, 72, 148, 0.12) 14%, rgba(9, 48, 114, 0.88) 100%),
-    radial-gradient(circle at 16% 40%, rgba(255, 255, 255, 0.28), transparent 24%),
-    radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.18), transparent 20%),
-    radial-gradient(circle at 82% 38%, rgba(255, 213, 76, 0.22), transparent 24%);
+.event-card__fallback-visual--backdrop {
+  padding: 1rem;
 }
 
 .event-card__media {
@@ -1632,7 +1639,9 @@ body[data-page="events"] .events-grid--listing .event-card {
 .event-card__content--live {
   position: relative;
   inset: auto;
-  margin: -3.3rem 1rem 1rem;
+  z-index: 3;
+  margin: 1rem;
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .event-card__topline,

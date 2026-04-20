@@ -742,7 +742,7 @@ function eventCardMarkup(event) {
 
   return `
     <article class="event-card event-card--live">
-      <div class="event-card__media event-card__media--${surfaceClass} event-card__media--live${hasPhoto ? " event-card__media--photo" : ""}">
+      <div class="event-card__backdrop event-card__backdrop--${surfaceClass}${hasPhoto ? " event-card__backdrop--photo" : ""}">
         ${
           hasPhoto
             ? `
@@ -756,7 +756,7 @@ function eventCardMarkup(event) {
               />
             `
             : `
-              <div class="event-card__fallback-visual">
+              <div class="event-card__fallback-visual event-card__fallback-visual--backdrop">
                 ${eventGraphicMarkup({ sceneClass: surfaceClass, scope: "city", timeframe: "week" }, "event")}
               </div>
             `
