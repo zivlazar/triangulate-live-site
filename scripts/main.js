@@ -110,7 +110,7 @@ function renderEventFilters(summary = null) {
   const heading = summary || {
     eyebrow: "Live events",
     title: "Events",
-    description: "Pulling the same event feed as the mobile app.",
+    description: "",
   };
 
   container.innerHTML = `
@@ -118,7 +118,7 @@ function renderEventFilters(summary = null) {
       <div class="events-toolbar__heading">
         <p class="panel-label">${escapeHtml(heading.eyebrow)}</p>
         <h2>${escapeHtml(heading.title)}</h2>
-        <p>${escapeHtml(heading.description)}</p>
+        ${heading.description ? `<p>${escapeHtml(heading.description)}</p>` : ""}
       </div>
       <div class="event-filter-group">
         <p class="panel-label">Updated</p>
@@ -825,13 +825,13 @@ function renderEvents() {
     renderEventFilters({
       eyebrow: "Live events",
       title: "Events",
-      description: "Pulling the same event feed as the mobile app.",
+      description: "",
     });
     updateEventsFootnote();
     grid.innerHTML = `
       <article class="events-empty">
         <p class="panel-label">Loading live events</p>
-        <h3>Pulling the same event feed as the mobile app.</h3>
+        <h3>Loading events.</h3>
         <p>Only app-created public events will appear here.</p>
       </article>
     `;
