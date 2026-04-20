@@ -103,6 +103,14 @@ function hasViewerLocation() {
   return eventState.locationMode === "browser";
 }
 
+function locationsHeadingTitle() {
+  const label = String(eventState.center?.label || "").trim();
+  if (label && label !== "your location" && label !== EVENT_FALLBACK_CENTER.label) {
+    return `Locations near ${label}`;
+  }
+  return "Locations near you";
+}
+
 function renderEventFilters(summary = null) {
   const container = document.getElementById("event-filters");
   if (!container) return;
@@ -825,14 +833,14 @@ function renderEvents() {
   if (eventState.loading) {
     renderEventFilters({
       eyebrow: "Live events",
-      title: "Events",
+      title: locationsHeadingTitle(),
       description: "",
     });
     updateEventsFootnote();
     grid.innerHTML = `
       <article class="events-empty">
-        <p class="panel-label">Loading live events</p>
-        <h3>Loading events.</h3>
+        <p class="panel-label">${escapeHtml(locationsHeadingTitle())}</p>
+        <h3>${escapeHtml(locationsHeadingTitle())}</h3>
         <p>Only app-created public events will appear here.</p>
       </article>
     `;
