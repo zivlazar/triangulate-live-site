@@ -622,7 +622,7 @@ function eventMicrocopy(event) {
   if (event.team_name) {
     return `${event.team_name} hosting · ${host}${event.team_member_count ? ` + ${event.team_member_count} crew` : ""}`;
   }
-  return `Hosted by ${host}${event.registration_count > 0 ? ` · ${event.registration_count} interested` : ""}`;
+  return `Hosted by ${host}`;
 }
 
 function surfaceClassForEvent(event) {
