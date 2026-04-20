@@ -41,13 +41,14 @@ const EVENT_VIEWER_ID = "web-public-viewer";
 
 const eventState = {
   center: { ...EVENT_FALLBACK_CENTER },
+  autoLocateAttempted: false,
   error: "",
   events: [],
   expandedEventId: "",
   lastUpdatedAt: null,
   loading: false,
   locationMode: "fallback",
-  locationNote: "Showing events near central London until you share your location.",
+  locationNote: "Showing public events now. Distances stay hidden until your location is available.",
   locating: false,
   registrations: new Map(),
   registrationsLoading: new Set(),
@@ -98,9 +99,15 @@ function updatedTimeLabel(date) {
   })}`;
 }
 
+function hasViewerLocation() {
+  return eventState.locationMode === "browser";
+}
+
 function renderEventFilters() {
   const container = document.getElementById("event-filters");
   if (!container) return;
+
+  const locationLabel = hasViewerLocation() ? eventState.center.label : "location not shared";
 
   container.innerHTML = `
     <div class="events-toolbar">
@@ -114,7 +121,7 @@ function renderEventFilters() {
       <div class="event-filter-group">
         <p class="panel-label">Showing</p>
         <div class="filter-row">
-          <span class="filter-chip is-static">${escapeHtml(eventState.center.label)}</span>
+          <span class="filter-chip is-static">${escapeHtml(locationLabel)}</span>
           <span class="filter-chip is-static">${escapeHtml(updatedTimeLabel(eventState.lastUpdatedAt))}</span>
         </div>
         <p class="events-toolbar__note">${escapeHtml(eventState.locationNote)}</p>
@@ -651,6 +658,7 @@ function attendeeMarkup(registration) {
 function eventDetailsMarkup(event) {
   const registrationState = eventState.registrations.get(event.id);
   const isLoadingRegistrations = eventState.registrationsLoading.has(event.id);
+  const showDistance = hasViewerLocation();
 
   let attendeeContent = '<p class="event-detail__hint">Nobody has RSVP’d yet.</p>';
   if (isLoadingRegistrations) {
@@ -672,10 +680,16 @@ function eventDetailsMarkup(event) {
           <span>Where</span>
           <strong>${escapeHtml(placeLabel(event))}</strong>
         </div>
-        <div class="event-detail-item">
-          <span>Distance</span>
-          <strong>${escapeHtml(distanceLabel(event.distance_m))}</strong>
-        </div>
+        ${
+          showDistance
+            ? `
+              <div class="event-detail-item">
+                <span>Distance</span>
+                <strong>${escapeHtml(distanceLabel(event.distance_m))}</strong>
+              </div>
+            `
+            : ""
+        }
         <div class="event-detail-item">
           <span>Host</span>
           <strong>${escapeHtml(event.creator_nickname || "Someone")}</strong>
@@ -723,12 +737,14 @@ function eventCardMarkup(event) {
   const isExpanded = eventState.expandedEventId === event.id;
   const isRecent = isRecentEvent(event);
   const surfaceClass = surfaceClassForEvent(event);
+  const hasPhoto = Boolean(event.meeting_point_photo_url);
+  const showDistance = hasViewerLocation();
 
   return `
     <article class="event-card event-card--live">
-      <div class="event-card__media event-card__media--${surfaceClass} event-card__media--live">
+      <div class="event-card__media event-card__media--${surfaceClass} event-card__media--live${hasPhoto ? " event-card__media--photo" : ""}">
         ${
-          event.meeting_point_photo_url
+          hasPhoto
             ? `
               <img
                 class="event-card__image"
@@ -757,7 +773,7 @@ function eventCardMarkup(event) {
         </div>
         <div class="event-card__meta">
           <span>${escapeHtml(detailWhenLabel(event.scheduled_for))}</span>
-          <span>${escapeHtml(distanceLabel(event.distance_m))}</span>
+          ${showDistance ? `<span>${escapeHtml(distanceLabel(event.distance_m))}</span>` : ""}
           <div class="player-stack" aria-hidden="true">${playerStack(event.registration_count)}</div>
         </div>
         <p class="event-card__microcopy">${escapeHtml(eventMicrocopy(event))}</p>
@@ -893,7 +909,7 @@ function getBrowserLocation() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => resolve(position.coords),
-      () => reject(new Error("Couldn’t get your location, so the site is still showing central London.")),
+      () => reject(new Error("Couldn’t get your location.")),
       {
         enableHighAccuracy: false,
         timeout: 10000,
@@ -901,6 +917,40 @@ function getBrowserLocation() {
       }
     );
   });
+}
+
+async function locateEventsFromBrowser({ silent = false } = {}) {
+  eventState.locating = true;
+  eventState.locationNote = silent
+    ? "Checking your location so distances match where you are."
+    : "Looking for your current location…";
+  renderEventFilters();
+
+  try {
+    const coords = await getBrowserLocation();
+    eventState.locationMode = "browser";
+    eventState.locationNote = "Showing events near your current location.";
+    await refreshEvents({
+      lat: coords.latitude,
+      lng: coords.longitude,
+      label: "your location",
+    });
+  } catch (error) {
+    eventState.locationMode = "fallback";
+    eventState.locationNote = error instanceof Error
+      ? `${error.message} Distances stay hidden until location is available.`
+      : "Couldn’t get your location. Distances stay hidden until location is available.";
+    renderEventFilters();
+  } finally {
+    eventState.locating = false;
+    renderEventFilters();
+  }
+}
+
+function autoLocateEvents() {
+  if (eventState.autoLocateAttempted || !navigator.geolocation) return;
+  eventState.autoLocateAttempted = true;
+  void locateEventsFromBrowser({ silent: true });
 }
 
 async function ensureRegistrations(eventId) {
@@ -949,29 +999,7 @@ function bindEventsPage() {
       }
 
       if (action === "locate") {
-        eventState.locating = true;
-        eventState.locationNote = "Looking for your current location…";
-        renderEventFilters();
-
-        try {
-          const coords = await getBrowserLocation();
-          eventState.locationMode = "browser";
-          eventState.locationNote = "Showing events near your current location.";
-          await refreshEvents({
-            lat: coords.latitude,
-            lng: coords.longitude,
-            label: "your location",
-          });
-        } catch (error) {
-          eventState.locationMode = "fallback";
-          eventState.locationNote = error instanceof Error
-            ? error.message
-            : "Couldn’t get your location, so the site is still showing central London.";
-          renderEventFilters();
-        } finally {
-          eventState.locating = false;
-          renderEventFilters();
-        }
+        await locateEventsFromBrowser();
       }
     });
   }
@@ -1073,6 +1101,7 @@ if (document.getElementById("events-grid")) {
   renderEvents();
   bindEventsPage();
   refreshEvents();
+  autoLocateEvents();
 }
 renderAudienceCards();
 renderSteps();
