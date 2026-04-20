@@ -1014,6 +1014,10 @@ body[data-page="home"] .hero-overlay-card {
   align-items: start;
 }
 
+.page-hero__grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .page-hero__card {
   padding: 1.2rem;
   border-radius: 30px;
