@@ -107,24 +107,13 @@ function renderEventFilters() {
   const container = document.getElementById("event-filters");
   if (!container) return;
 
-  const locationLabel = hasViewerLocation() ? eventState.center.label : "location not shared";
-
   container.innerHTML = `
     <div class="events-toolbar">
       <div class="event-filter-group">
-        <p class="panel-label">Source</p>
+        <p class="panel-label">Updated</p>
         <div class="filter-row">
-          <span class="filter-chip is-static is-active">Mobile event planner</span>
-          <span class="filter-chip is-static">Same Supabase RPC as the app</span>
-        </div>
-      </div>
-      <div class="event-filter-group">
-        <p class="panel-label">Showing</p>
-        <div class="filter-row">
-          <span class="filter-chip is-static">${escapeHtml(locationLabel)}</span>
           <span class="filter-chip is-static">${escapeHtml(updatedTimeLabel(eventState.lastUpdatedAt))}</span>
         </div>
-        <p class="events-toolbar__note">${escapeHtml(eventState.locationNote)}</p>
       </div>
       <div class="events-toolbar__actions">
         <button class="button button--secondary" type="button" data-event-action="refresh">
@@ -136,7 +125,7 @@ function renderEventFilters() {
           data-event-action="locate"
           ${!navigator.geolocation || eventState.locating ? "disabled" : ""}
         >
-          ${eventState.locating ? "Finding you…" : "Use my location"}
+          ${eventState.locating ? "Finding you…" : "Use current location"}
         </button>
       </div>
     </div>

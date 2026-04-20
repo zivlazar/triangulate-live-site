@@ -1403,7 +1403,7 @@ body[data-page="home"] .hero-overlay-card {
 
 .events-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   align-items: end;
   padding: 1.1rem 1.2rem;
@@ -1411,13 +1411,6 @@ body[data-page="home"] .hero-overlay-card {
   background: rgba(255, 255, 255, 0.9);
   border: 3px solid rgba(255, 255, 255, 0.96);
   box-shadow: var(--card-shadow);
-}
-
-.events-toolbar__note {
-  margin: 0;
-  color: var(--ink-muted);
-  font-size: 0.92rem;
-  font-weight: 700;
 }
 
 .events-toolbar__actions {
