@@ -103,12 +103,23 @@ function hasViewerLocation() {
   return eventState.locationMode === "browser";
 }
 
-function renderEventFilters() {
+function renderEventFilters(summary = null) {
   const container = document.getElementById("event-filters");
   if (!container) return;
 
+  const heading = summary || {
+    eyebrow: "Live events",
+    title: "Events",
+    description: "Pulling the same event feed as the mobile app.",
+  };
+
   container.innerHTML = `
     <div class="events-toolbar">
+      <div class="events-toolbar__heading">
+        <p class="panel-label">${escapeHtml(heading.eyebrow)}</p>
+        <h2>${escapeHtml(heading.title)}</h2>
+        <p>${escapeHtml(heading.description)}</p>
+      </div>
       <div class="event-filter-group">
         <p class="panel-label">Updated</p>
         <div class="filter-row">
@@ -807,13 +818,16 @@ function renderEvents() {
   const grid = document.getElementById("events-grid");
   if (!grid) return;
 
-  renderEventFilters();
-  updateEventsFootnote();
-
   grid.classList.remove("events-grid--listing");
   grid.classList.add("events-grid--live");
 
   if (eventState.loading) {
+    renderEventFilters({
+      eyebrow: "Live events",
+      title: "Events",
+      description: "Pulling the same event feed as the mobile app.",
+    });
+    updateEventsFootnote();
     grid.innerHTML = `
       <article class="events-empty">
         <p class="panel-label">Loading live events</p>
@@ -825,6 +839,12 @@ function renderEvents() {
   }
 
   if (eventState.error) {
+    renderEventFilters({
+      eyebrow: "Live events",
+      title: "Events",
+      description: "The live feed didn’t respond just now.",
+    });
+    updateEventsFootnote();
     grid.innerHTML = `
       <article class="events-empty">
         <p class="panel-label">Couldn’t load events</p>
@@ -836,6 +856,12 @@ function renderEvents() {
   }
 
   if (!eventState.events.length) {
+    renderEventFilters({
+      eyebrow: "Live events",
+      title: "Events",
+      description: "Only app-created public events show up here.",
+    });
+    updateEventsFootnote();
     grid.innerHTML = `
       <article class="events-empty">
         <p class="panel-label">No live events yet</p>
@@ -851,13 +877,31 @@ function renderEvents() {
   const sections = [];
 
   if (upcomingEvents.length) {
-    sections.push(eventSectionMarkup("Scheduled soon", "Upcoming", upcomingEvents));
+    renderEventFilters({
+      eyebrow: "Upcoming",
+      title: "Scheduled soon",
+      description: `Showing ${upcomingEvents.length} live event${upcomingEvents.length === 1 ? "" : "s"} from the mobile planner.`,
+    });
+    sections.push(`
+      <section class="events-subsection">
+        <div class="events-subsection__grid">
+          ${upcomingEvents.map((event) => eventCardMarkup(event)).join("")}
+        </div>
+      </section>
+    `);
+  } else {
+    renderEventFilters({
+      eyebrow: "Recent",
+      title: "Recent action",
+      description: `Showing ${recentEvents.length} live event${recentEvents.length === 1 ? "" : "s"} from the mobile planner.`,
+    });
   }
 
   if (recentEvents.length) {
     sections.push(eventSectionMarkup("Recent action", "Recent", recentEvents));
   }
 
+  updateEventsFootnote();
   grid.innerHTML = sections.join("");
 }
 
