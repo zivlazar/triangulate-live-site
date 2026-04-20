@@ -1385,6 +1385,48 @@ body[data-page="home"] .hero-overlay-card {
   border-color: rgba(255, 255, 255, 0.98);
 }
 
+.filter-chip.is-static {
+  cursor: default;
+}
+
+.filter-chip.is-static:hover {
+  color: rgba(23, 54, 101, 0.78);
+  background: rgba(255, 255, 255, 0.84);
+  border-color: rgba(255, 255, 255, 0.94);
+}
+
+.filter-chip.is-static.is-active:hover {
+  color: var(--navy-deep);
+  background: var(--lime);
+  border-color: rgba(255, 255, 255, 0.98);
+}
+
+.events-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+  padding: 1.1rem 1.2rem;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 3px solid rgba(255, 255, 255, 0.96);
+  box-shadow: var(--card-shadow);
+}
+
+.events-toolbar__note {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.events-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
 .events-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
@@ -1398,6 +1440,11 @@ body[data-page="home"] .hero-overlay-card {
 
 .events-grid--listing {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.events-grid--live {
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
 }
 
 .events-empty {
@@ -1428,6 +1475,37 @@ body[data-page="events"] .events-grid__stack {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.events-subsection {
+  display: grid;
+  gap: 1rem;
+}
+
+.events-subsection__head {
+  padding: 1.15rem 1.2rem;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(235, 248, 255, 0.88));
+  border: 3px solid rgba(255, 255, 255, 0.96);
+  box-shadow: var(--card-shadow);
+}
+
+.events-subsection__head h2 {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.8vw, 2rem);
+  letter-spacing: -0.04em;
+}
+
+.events-subsection__head p:last-child {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.events-subsection__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
 .event-card {
   position: relative;
   display: grid;
@@ -1445,6 +1523,35 @@ body[data-page="events"] .events-grid__stack {
 
 body[data-page="events"] .events-grid--listing .event-card {
   min-height: 520px;
+}
+
+.event-card--live {
+  min-height: 0;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.event-card--live .event-card__media {
+  min-height: 240px;
+  padding: 0;
+  border-radius: 30px 30px 0 0;
+  border-bottom: none;
+}
+
+.event-card__media--live {
+  min-height: 240px;
+}
+
+.event-card__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-card__fallback-visual {
+  position: absolute;
+  inset: 0;
 }
 
 .event-card__media {
@@ -1495,6 +1602,12 @@ body[data-page="events"] .events-grid--listing .event-card {
   box-shadow: 0 18px 40px rgba(17, 68, 131, 0.16);
 }
 
+.event-card__content--live {
+  position: relative;
+  inset: auto;
+  margin: -3.3rem 1rem 1rem;
+}
+
 .event-card__topline,
 .event-card__meta,
 .event-card__footer {
@@ -1539,6 +1652,14 @@ body[data-page="events"] .events-grid--listing .event-card {
   background: rgba(255, 123, 84, 0.18);
 }
 
+.status-pill[data-status="upcoming"] {
+  background: rgba(255, 123, 84, 0.18);
+}
+
+.status-pill[data-status="recent"] {
+  background: rgba(82, 216, 255, 0.2);
+}
+
 .player-stack {
   display: inline-flex;
   align-items: center;
@@ -1566,6 +1687,11 @@ body[data-page="events"] .events-grid--listing .event-card {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+}
+
+.event-card__intro {
+  margin: 0;
+  color: var(--ink-muted);
 }
 
 .event-stat {
@@ -1709,6 +1835,85 @@ body[data-page="events"] .events-grid--listing .event-card {
   margin: 1.2rem 0 0;
   text-align: center;
   font-weight: 600;
+}
+
+.event-card__details {
+  display: grid;
+  gap: 0.9rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(21, 73, 143, 0.14);
+}
+
+.event-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.event-detail-item,
+.event-detail-copy {
+  padding: 0.9rem 0.95rem;
+  border-radius: 20px;
+  background: rgba(79, 170, 235, 0.08);
+  border: 1px solid rgba(79, 170, 235, 0.12);
+}
+
+.event-detail-item span,
+.event-detail-copy span {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-subtle);
+}
+
+.event-detail-item strong {
+  font-size: 0.98rem;
+  letter-spacing: -0.02em;
+}
+
+.event-detail-copy p,
+.event-detail__hint {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.event-attendees {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.event-attendee {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.event-attendee__dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.88);
+}
+
+.event-attendee__body {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.event-attendee__body strong {
+  font-size: 0.94rem;
+}
+
+.event-attendee__body span {
+  color: var(--ink-subtle);
+  font-size: 0.86rem;
 }
 
 .audience-grid {
@@ -2067,6 +2272,14 @@ body[data-page="events"] .events-grid--listing .event-card {
   .events-grid--listing {
     grid-template-columns: 1fr;
   }
+
+  .events-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .events-subsection__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 820px) {
@@ -2150,6 +2363,14 @@ body[data-page="events"] .events-grid--listing .event-card {
   .event-schedule-feature__media,
   .event-schedule-item__media {
     min-height: 180px;
+  }
+
+  .events-toolbar__actions {
+    justify-content: stretch;
+  }
+
+  .events-toolbar__actions .button {
+    flex: 1 1 180px;
   }
 
   .events-heading,
@@ -2247,6 +2468,10 @@ body[data-page="events"] .events-grid--listing .event-card {
   .event-schedule-feature__media,
   .event-schedule-item__media {
     min-height: 156px;
+  }
+
+  .event-detail-grid {
+    grid-template-columns: 1fr;
   }
 
   .trust-line {

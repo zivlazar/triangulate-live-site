@@ -6,7 +6,7 @@
     <title>Triangulate Events | What’s happening soon</title>
     <meta
       name="description"
-      content="See what’s happening soon in Triangulate, from quick play sessions to recurring weekly formats."
+      content="See live Triangulate events pulled from the same source as the mobile app."
     />
     <meta name="theme-color" content="#1d7ce4" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="icon" type="image/png" href="./assets/app/favicon.png" />
-    <link rel="stylesheet" href="./styles/site.css?v=1776438162" />
+    <link rel="stylesheet" href="./styles/site.css?v=202604201830" />
   </head>
   <body data-page="events">
     <div class="site-shell">
@@ -46,15 +46,14 @@
               <p class="eyebrow">Live events</p>
               <h1 class="page-title">Events</h1>
               <p>
-                This is where Triangulate feels best. Pick a time, show up outdoors, and step into
-                a match with movement, team play, and just enough chaos. Some sessions come back
-                every week, so it’s easy to know when to jump in.
+                This page now pulls from the same live event feed as the mobile app. If an event
+                has not been published from the app, it should not appear here.
               </p>
             </div>
             <div class="page-hero__card" data-reveal>
-              <p class="panel-label">Bracketed view</p>
-              <h3>Structured like the leaderboard</h3>
-              <p>Switch between local, city, global, and away-day events, then narrow them by today, this week, or this month.</p>
+              <p class="panel-label">Live sync</p>
+              <h3>Website and app share one source</h3>
+              <p>The website reads the same public event data as the app, with a central London fallback if browser location is unavailable.</p>
             </div>
           </div>
         </section>
@@ -63,17 +62,8 @@
           <div class="container">
             <div class="events-controls" id="event-filters" data-reveal></div>
             <div class="events-grid" id="events-grid" data-reveal></div>
-            <div class="event-schedule-shell" data-reveal>
-              <div class="event-schedule-head">
-                <p class="panel-label">Every week</p>
-                <h3>Regular sessions</h3>
-                <p>Different sessions land through the week. Same simple idea: show up, spread out, play.</p>
-              </div>
-              <div class="event-schedule-feature" id="event-schedule-feature"></div>
-              <div class="event-schedule-list" id="event-schedule-list"></div>
-            </div>
-            <p class="section-note" data-reveal>
-              The right event turns open space into a fast, tactical team game in minutes.
+            <p class="section-note" id="events-footnote" data-reveal>
+              Only public events created in the mobile app are shown here.
             </p>
           </div>
         </section>
@@ -95,7 +85,7 @@
       </footer>
     </div>
 
-    <script type="module" src="./scripts/main.js?v=1776437150"></script>
+    <script type="module" src="./scripts/main.js?v=202604201830"></script>
     <script src="./scripts/nav.js?v=1776436676" defer></script>
   </body>
 </html>

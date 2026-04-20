@@ -1,16 +1,12 @@
 import "./site-core.js";
 import {
   audienceCards,
-  eventSchedule,
-  eventScopeFilters,
-  eventTimeFilters,
-  events,
   heroVisualPrompts,
   quickStartItems,
   steps,
-  weeklyFeature,
 } from "./content.js";
 import { initLeaderboard } from "./leaderboard.js";
+import { SUPABASE_KEY, SUPABASE_URL } from "./site-config.js";
 
 function getCurrentPage() {
   return document.body?.dataset.page || "home";
@@ -33,59 +29,116 @@ function renderQuickStart() {
     .join("");
 }
 
-const eventFilterState = {
-  scope: "local",
-  time: "today",
+const EVENT_FALLBACK_CENTER = {
+  lat: 51.5074,
+  lng: -0.1278,
+  label: "central London",
 };
+
+const EVENT_RADIUS_KM = 50;
+const EVENT_LIMIT = 50;
+const EVENT_VIEWER_ID = "web-public-viewer";
+
+const eventState = {
+  center: { ...EVENT_FALLBACK_CENTER },
+  error: "",
+  events: [],
+  expandedEventId: "",
+  lastUpdatedAt: null,
+  loading: false,
+  locationMode: "fallback",
+  locationNote: "Showing events near central London until you share your location.",
+  locating: false,
+  registrations: new Map(),
+  registrationsLoading: new Set(),
+};
+
+async function sbRpc(fn, payload) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Supabase ${res.status}`);
+  }
+
+  return res.json();
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return char;
+    }
+  });
+}
+
+function updatedTimeLabel(date) {
+  if (!(date instanceof Date)) return "Waiting for live data";
+  return `Updated ${date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+}
 
 function renderEventFilters() {
   const container = document.getElementById("event-filters");
   if (!container) return;
 
   container.innerHTML = `
-    <div class="event-filter-group">
-      <p class="panel-label">Where</p>
-      <div class="filter-row">
-        ${eventScopeFilters
-          .map(
-            (filter) => `
-              <button
-                class="filter-chip${filter.key === eventFilterState.scope ? " is-active" : ""}"
-                type="button"
-                data-filter-group="scope"
-                data-filter-value="${filter.key}"
-              >
-                ${filter.label}
-              </button>
-            `
-          )
-          .join("")}
+    <div class="events-toolbar">
+      <div class="event-filter-group">
+        <p class="panel-label">Source</p>
+        <div class="filter-row">
+          <span class="filter-chip is-static is-active">Mobile event planner</span>
+          <span class="filter-chip is-static">Same Supabase RPC as the app</span>
+        </div>
       </div>
-    </div>
-    <div class="event-filter-group">
-      <p class="panel-label">When</p>
-      <div class="filter-row">
-        ${eventTimeFilters
-          .map(
-            (filter) => `
-              <button
-                class="filter-chip${filter.key === eventFilterState.time ? " is-active" : ""}"
-                type="button"
-                data-filter-group="time"
-                data-filter-value="${filter.key}"
-              >
-                ${filter.label}
-              </button>
-            `
-          )
-          .join("")}
+      <div class="event-filter-group">
+        <p class="panel-label">Showing</p>
+        <div class="filter-row">
+          <span class="filter-chip is-static">${escapeHtml(eventState.center.label)}</span>
+          <span class="filter-chip is-static">${escapeHtml(updatedTimeLabel(eventState.lastUpdatedAt))}</span>
+        </div>
+        <p class="events-toolbar__note">${escapeHtml(eventState.locationNote)}</p>
+      </div>
+      <div class="events-toolbar__actions">
+        <button class="button button--secondary" type="button" data-event-action="refresh">
+          Refresh
+        </button>
+        <button
+          class="button button--quiet"
+          type="button"
+          data-event-action="locate"
+          ${!navigator.geolocation || eventState.locating ? "disabled" : ""}
+        >
+          ${eventState.locating ? "Finding you…" : "Use my location"}
+        </button>
       </div>
     </div>
   `;
 }
 
 function playerStack(count) {
-  const visible = Math.min(4, Math.max(3, Math.ceil(count / 6)));
+  if (!count || count < 1) return "";
+  const visible = Math.min(4, Math.max(1, Math.ceil(count / 2)));
   return new Array(visible).fill("").map(() => "<span></span>").join("");
 }
 
@@ -478,39 +531,270 @@ function initHeroTriangles() {
   );
 }
 
-function eventCardMarkup(event, { featured = event.featured } = {}) {
+function roundToHalfHour(date) {
+  const rounded = new Date(date);
+  const minutes = rounded.getMinutes();
+  rounded.setMinutes(minutes < 15 ? 0 : minutes < 45 ? 30 : 60, 0, 0);
+  return rounded;
+}
+
+function formatDayTime(date) {
+  const day = date.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  const time = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${day} · ${time}`;
+}
+
+function parseScheduledFor(iso) {
+  if (!iso) return null;
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isRecentEvent(event) {
+  const scheduled = parseScheduledFor(event.scheduled_for);
+  return scheduled ? scheduled.getTime() < Date.now() : false;
+}
+
+function timeLabel(event) {
+  const scheduled = parseScheduledFor(event.scheduled_for);
+  if (!scheduled) return "Whenever works";
+
+  const start = scheduled.getTime();
+  const now = Date.now();
+  const diffMs = start - now;
+
+  if (start < now) {
+    const minutesAgo = Math.floor((now - start) / 60000);
+    if (minutesAgo < 60) return `Finished ${minutesAgo} min ago`;
+    return `Finished ${Math.floor(minutesAgo / 60)}h ago`;
+  }
+
+  const display = roundToHalfHour(scheduled);
+  const dayTime = formatDayTime(display);
+
+  if (diffMs > 0 && diffMs < 24 * 60 * 60_000) {
+    const minutes = Math.ceil(diffMs / 60_000);
+    if (minutes <= 1) return `${dayTime} (starting now)`;
+    if (minutes < 60) return `${dayTime} (in ${minutes} min)`;
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    return remainder === 0 ? `${dayTime} (in ${hours}h)` : `${dayTime} (in ${hours}h ${remainder}m)`;
+  }
+
+  return dayTime;
+}
+
+function detailWhenLabel(iso) {
+  const scheduled = parseScheduledFor(iso);
+  if (!scheduled) return "Whenever works";
+  return formatDayTime(roundToHalfHour(scheduled));
+}
+
+function distanceLabel(distanceM) {
+  if (typeof distanceM !== "number" || Number.isNaN(distanceM)) return "Distance unknown";
+  if (distanceM < 1000) return `${Math.round(distanceM)}m away`;
+  return `${(distanceM / 1000).toFixed(1)}km away`;
+}
+
+function placeLabel(event) {
+  return event.meeting_point_parent_name
+    ? `${event.meeting_point_parent_name} · ${event.meeting_point_name}`
+    : event.meeting_point_name;
+}
+
+function eventMicrocopy(event) {
+  const host = event.creator_nickname || "Someone";
+  if (event.team_name) {
+    return `${event.team_name} hosting · ${host}${event.team_member_count ? ` + ${event.team_member_count} crew` : ""}`;
+  }
+  return `Hosted by ${host}${event.registration_count > 0 ? ` · ${event.registration_count} interested` : ""}`;
+}
+
+function surfaceClassForEvent(event) {
+  const text = `${event.meeting_point_name || ""} ${event.meeting_point_parent_name || ""}`.toLowerCase();
+  if (text.includes("park") || text.includes("common") || text.includes("green")) return "park";
+  if (text.includes("river") || text.includes("canal") || text.includes("bank")) return "river";
+  if (text.includes("school") || text.includes("college") || text.includes("campus") || text.includes("university")) return "campus";
+  if (text.includes("square") || text.includes("market") || text.includes("plaza")) return "plaza";
+  return "city";
+}
+
+function updateEventsFootnote() {
+  const footnote = document.getElementById("events-footnote");
+  if (!footnote) return;
+
+  footnote.textContent = eventState.error
+    ? "The website only shows public events created through the mobile event planner."
+    : "Only public events created in the mobile app are shown here, using the same live source data as the app.";
+}
+
+function attendeeMarkup(registration) {
   return `
-    <article class="event-card ${featured ? "event-card--featured" : ""}">
-      <div class="event-card__media event-card__media--${event.sceneClass}">
-        ${eventGraphicMarkup(event, "event")}
+    <li class="event-attendee">
+      <span class="event-attendee__dot" style="background:${escapeHtml(registration.color || "#7ca3dc")}"></span>
+      <div class="event-attendee__body">
+        <strong>${escapeHtml(registration.nickname || registration.player_id)}</strong>
+        <span>${escapeHtml(registration.status)}</span>
       </div>
-      <div class="event-card__content">
+    </li>
+  `;
+}
+
+function eventDetailsMarkup(event) {
+  const registrationState = eventState.registrations.get(event.id);
+  const isLoadingRegistrations = eventState.registrationsLoading.has(event.id);
+
+  let attendeeContent = '<p class="event-detail__hint">Nobody has RSVP’d yet.</p>';
+  if (isLoadingRegistrations) {
+    attendeeContent = '<p class="event-detail__hint">Loading who’s going…</p>';
+  } else if (registrationState?.error) {
+    attendeeContent = `<p class="event-detail__hint">${escapeHtml(registrationState.error)}</p>`;
+  } else if (registrationState?.rows?.length) {
+    attendeeContent = `<ul class="event-attendees">${registrationState.rows.map(attendeeMarkup).join("")}</ul>`;
+  }
+
+  return `
+    <div class="event-card__details">
+      <div class="event-detail-grid">
+        <div class="event-detail-item">
+          <span>When</span>
+          <strong>${escapeHtml(detailWhenLabel(event.scheduled_for))}</strong>
+        </div>
+        <div class="event-detail-item">
+          <span>Where</span>
+          <strong>${escapeHtml(placeLabel(event))}</strong>
+        </div>
+        <div class="event-detail-item">
+          <span>Distance</span>
+          <strong>${escapeHtml(distanceLabel(event.distance_m))}</strong>
+        </div>
+        <div class="event-detail-item">
+          <span>Host</span>
+          <strong>${escapeHtml(event.creator_nickname || "Someone")}</strong>
+        </div>
+        ${
+          event.meeting_point_postcode
+            ? `
+              <div class="event-detail-item">
+                <span>Postcode</span>
+                <strong>${escapeHtml(event.meeting_point_postcode)}</strong>
+              </div>
+            `
+            : ""
+        }
+        ${
+          event.team_name
+            ? `
+              <div class="event-detail-item">
+                <span>Team</span>
+                <strong>${escapeHtml(event.team_name)}</strong>
+              </div>
+            `
+            : ""
+        }
+      </div>
+      ${
+        event.plan_note
+          ? `
+            <div class="event-detail-copy">
+              <span>Description</span>
+              <p>${escapeHtml(event.plan_note)}</p>
+            </div>
+          `
+          : ""
+      }
+      <div class="event-detail-copy">
+        <span>Who’s going</span>
+        ${attendeeContent}
+      </div>
+    </div>
+  `;
+}
+
+function eventCardMarkup(event) {
+  const isExpanded = eventState.expandedEventId === event.id;
+  const isRecent = isRecentEvent(event);
+  const surfaceClass = surfaceClassForEvent(event);
+
+  return `
+    <article class="event-card event-card--live">
+      <div class="event-card__media event-card__media--${surfaceClass} event-card__media--live">
+        ${
+          event.meeting_point_photo_url
+            ? `
+              <img
+                class="event-card__image"
+                src="${escapeHtml(event.meeting_point_photo_url)}"
+                alt="${escapeHtml(placeLabel(event))}"
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+              />
+            `
+            : `
+              <div class="event-card__fallback-visual">
+                ${eventGraphicMarkup({ sceneClass: surfaceClass, scope: "city", timeframe: "week" }, "event")}
+              </div>
+            `
+        }
+      </div>
+      <div class="event-card__content event-card__content--live">
         <div class="event-card__topline">
-          <span class="player-chip">${event.typeLabel}</span>
-          <span class="status-pill" data-status="${event.statusKey}">${event.liveLabel}</span>
+          <span class="player-chip">${escapeHtml(event.team_name || "Live event")}</span>
+          <span class="status-pill" data-status="${isRecent ? "recent" : "upcoming"}">${escapeHtml(timeLabel(event))}</span>
         </div>
         <div class="event-card__title-group">
-          <h3>${event.name}</h3>
-          <p>${event.location}</p>
+          <h3>${escapeHtml(event.title)}</h3>
+          <p>${escapeHtml(placeLabel(event))}</p>
         </div>
         <div class="event-card__meta">
-          <span>${event.time}</span>
-          <span>${event.distance}</span>
-          <div class="player-stack" aria-hidden="true">${playerStack(event.players)}</div>
+          <span>${escapeHtml(detailWhenLabel(event.scheduled_for))}</span>
+          <span>${escapeHtml(distanceLabel(event.distance_m))}</span>
+          <div class="player-stack" aria-hidden="true">${playerStack(event.registration_count)}</div>
         </div>
-        <p class="event-card__microcopy">${event.microcopy}</p>
-        <p>${event.intro}</p>
+        <p class="event-card__microcopy">${escapeHtml(eventMicrocopy(event))}</p>
+        ${
+          event.plan_note
+            ? `<p class="event-card__intro">${escapeHtml(event.plan_note)}</p>`
+            : '<p class="event-card__intro">Published from the mobile app and synced directly to the website.</p>'
+        }
         <div class="event-card__stats">
-          <span class="event-stat">${event.players} joining</span>
-          ${event.playersActive > 0 ? `<span class="event-stat">${event.playersActive} active</span>` : ""}
-          ${event.teamsForming > 0 ? `<span class="event-stat">${event.teamsForming} teams forming</span>` : ""}
+          <span class="event-stat">${event.registration_count} going</span>
+          ${event.team_member_count ? `<span class="event-stat">${event.team_member_count} in crew</span>` : ""}
+          <span class="event-stat">${escapeHtml(event.status)}</span>
         </div>
         <div class="event-card__footer">
-          <a class="button button--secondary" href="#final-cta">${event.ctaLabel}</a>
-          <span class="panel-meta">${event.status}</span>
+          <button class="button button--secondary" type="button" data-event-toggle="${event.id}">
+            ${isExpanded ? "Hide details" : "See details"}
+          </button>
+          <span class="panel-meta">Posted from the app</span>
         </div>
+        ${isExpanded ? eventDetailsMarkup(event) : ""}
       </div>
     </article>
+  `;
+}
+
+function eventSectionMarkup(title, eyebrow, rows) {
+  return `
+    <section class="events-subsection">
+      <div class="events-subsection__head">
+        <p class="panel-label">${escapeHtml(eyebrow)}</p>
+        <h2>${escapeHtml(title)}</h2>
+        <p>${escapeHtml(`Showing ${rows.length} live event${rows.length === 1 ? "" : "s"} from the mobile planner.`)}</p>
+      </div>
+      <div class="events-subsection__grid">
+        ${rows.map((event) => eventCardMarkup(event)).join("")}
+      </div>
+    </section>
   `;
 }
 
@@ -519,81 +803,194 @@ function renderEvents() {
   if (!grid) return;
 
   renderEventFilters();
+  updateEventsFootnote();
 
-  const visibleEvents = events.filter(
-    (event) => event.scope === eventFilterState.scope && event.timeframe === eventFilterState.time
-  );
+  grid.classList.remove("events-grid--listing");
+  grid.classList.add("events-grid--live");
 
-  grid.classList.add("events-grid--listing");
-
-  if (visibleEvents.length === 0) {
+  if (eventState.loading) {
     grid.innerHTML = `
       <article class="events-empty">
-        <p class="panel-label">Nothing live here yet</p>
-        <h3>Try a different event bracket.</h3>
-        <p>Switch the location or time tabs to see more sessions in the same structure as the leaderboard.</p>
+        <p class="panel-label">Loading live events</p>
+        <h3>Pulling the same event feed as the mobile app.</h3>
+        <p>Only app-created public events will appear here.</p>
       </article>
     `;
     return;
   }
 
-  grid.innerHTML = visibleEvents.map((event) => eventCardMarkup(event, { featured: false })).join("");
+  if (eventState.error) {
+    grid.innerHTML = `
+      <article class="events-empty">
+        <p class="panel-label">Couldn’t load events</p>
+        <h3>The live feed didn’t respond just now.</h3>
+        <p>${escapeHtml(eventState.error)}</p>
+      </article>
+    `;
+    return;
+  }
+
+  if (!eventState.events.length) {
+    grid.innerHTML = `
+      <article class="events-empty">
+        <p class="panel-label">No live events yet</p>
+        <h3>Nothing nearby has been posted from the mobile app.</h3>
+        <p>When someone publishes a public event in the app, it will show up here automatically.</p>
+      </article>
+    `;
+    return;
+  }
+
+  const upcomingEvents = eventState.events.filter((event) => !isRecentEvent(event));
+  const recentEvents = eventState.events.filter((event) => isRecentEvent(event));
+  const sections = [];
+
+  if (upcomingEvents.length) {
+    sections.push(eventSectionMarkup("Scheduled soon", "Upcoming", upcomingEvents));
+  }
+
+  if (recentEvents.length) {
+    sections.push(eventSectionMarkup("Recent action", "Recent", recentEvents));
+  }
+
+  grid.innerHTML = sections.join("");
 }
 
-function bindEventFilters() {
-  const container = document.getElementById("event-filters");
-  if (!container) return;
+async function refreshEvents(nextCenter = eventState.center) {
+  eventState.loading = true;
+  eventState.error = "";
+  eventState.center = { ...nextCenter };
+  renderEvents();
 
-  container.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-filter-group][data-filter-value]");
-    if (!button) return;
-    eventFilterState[button.dataset.filterGroup] = button.dataset.filterValue;
+  try {
+    const rows = await sbRpc("list_public_events_near", {
+      p_lat: nextCenter.lat,
+      p_lng: nextCenter.lng,
+      p_radius_km: EVENT_RADIUS_KM,
+      p_limit: EVENT_LIMIT,
+    });
+
+    eventState.events = Array.isArray(rows) ? rows : [];
+    eventState.lastUpdatedAt = new Date();
+
+    if (eventState.expandedEventId && !eventState.events.some((event) => event.id === eventState.expandedEventId)) {
+      eventState.expandedEventId = "";
+    }
+  } catch (error) {
+    eventState.error = error instanceof Error ? error.message : "Could not load live events.";
+  } finally {
+    eventState.loading = false;
     renderEvents();
+  }
+}
+
+function getBrowserLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Location is not available in this browser."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve(position.coords),
+      () => reject(new Error("Couldn’t get your location, so the site is still showing central London.")),
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
   });
 }
 
-function renderEventSchedule() {
-  const feature = document.getElementById("event-schedule-feature");
-  const container = document.getElementById("event-schedule-list");
-  if (!container) return;
-
-  if (feature) {
-    feature.innerHTML = `
-      <article class="event-schedule-feature__card">
-        <div class="event-schedule-feature__media event-card__media--${weeklyFeature.sceneClass}">
-          ${eventGraphicMarkup(weeklyFeature, "schedule")}
-        </div>
-        <div>
-          <p class="panel-label">${weeklyFeature.label}</p>
-          <h4>${weeklyFeature.name}</h4>
-          <div class="event-schedule-feature__meta">
-            <strong>${weeklyFeature.time}</strong>
-            <p>${weeklyFeature.description}</p>
-          </div>
-        </div>
-      </article>
-    `;
+async function ensureRegistrations(eventId) {
+  if (eventState.registrations.has(eventId) || eventState.registrationsLoading.has(eventId)) {
+    return;
   }
 
-  container.innerHTML = eventSchedule
-    .map(
-      (item) => `
-        <article class="event-schedule-item">
-          <div class="event-schedule-item__media event-card__media--${item.sceneClass}">
-            ${eventGraphicMarkup(item, "schedule")}
-          </div>
-          <div class="event-schedule-item__body">
-            <div>
-              <p class="event-schedule-day">${item.day}</p>
-              <p class="event-schedule-time">${item.time}</p>
-            </div>
-            <strong>${item.name}</strong>
-            <p>${item.blurb}</p>
-          </div>
-        </article>
-      `
-    )
-    .join("");
+  eventState.registrationsLoading.add(eventId);
+  renderEvents();
+
+  try {
+    const rows = await sbRpc("get_event_registrations", {
+      p_event_id: eventId,
+      p_viewer_player_id: EVENT_VIEWER_ID,
+    });
+
+    eventState.registrations.set(eventId, {
+      error: "",
+      rows: Array.isArray(rows) ? rows : [],
+    });
+  } catch (error) {
+    eventState.registrations.set(eventId, {
+      error: error instanceof Error ? error.message : "Could not load registrations.",
+      rows: [],
+    });
+  } finally {
+    eventState.registrationsLoading.delete(eventId);
+    renderEvents();
+  }
+}
+
+function bindEventsPage() {
+  const controls = document.getElementById("event-filters");
+  const grid = document.getElementById("events-grid");
+
+  if (controls && !controls.dataset.bound) {
+    controls.dataset.bound = "true";
+    controls.addEventListener("click", async (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const action = target?.closest("[data-event-action]")?.dataset.eventAction;
+      if (!action) return;
+
+      if (action === "refresh") {
+        await refreshEvents(eventState.center);
+        return;
+      }
+
+      if (action === "locate") {
+        eventState.locating = true;
+        eventState.locationNote = "Looking for your current location…";
+        renderEventFilters();
+
+        try {
+          const coords = await getBrowserLocation();
+          eventState.locationMode = "browser";
+          eventState.locationNote = "Showing events near your current location.";
+          await refreshEvents({
+            lat: coords.latitude,
+            lng: coords.longitude,
+            label: "your location",
+          });
+        } catch (error) {
+          eventState.locationMode = "fallback";
+          eventState.locationNote = error instanceof Error
+            ? error.message
+            : "Couldn’t get your location, so the site is still showing central London.";
+          renderEventFilters();
+        } finally {
+          eventState.locating = false;
+          renderEventFilters();
+        }
+      }
+    });
+  }
+
+  if (grid && !grid.dataset.bound) {
+    grid.dataset.bound = "true";
+    grid.addEventListener("click", async (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const eventId = target?.closest("[data-event-toggle]")?.dataset.eventToggle;
+      if (!eventId) return;
+
+      eventState.expandedEventId = eventState.expandedEventId === eventId ? "" : eventId;
+      renderEvents();
+
+      if (eventState.expandedEventId) {
+        await ensureRegistrations(eventId);
+      }
+    });
+  }
 }
 
 function renderAudienceCards() {
@@ -672,9 +1069,11 @@ function initReveal() {
 renderQuickStart();
 renderHeroVisual();
 initHeroTriangles();
-renderEvents();
-bindEventFilters();
-renderEventSchedule();
+if (document.getElementById("events-grid")) {
+  renderEvents();
+  bindEventsPage();
+  refreshEvents();
+}
 renderAudienceCards();
 renderSteps();
 markPromptSlots();
