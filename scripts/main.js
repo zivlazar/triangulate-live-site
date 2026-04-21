@@ -106,9 +106,9 @@ function hasViewerLocation() {
 function locationsHeadingTitle() {
   const label = String(eventState.center?.label || "").trim();
   if (label && label !== "your location" && label !== EVENT_FALLBACK_CENTER.label) {
-    return `Locations near ${label}`;
+    return `Events near ${label}`;
   }
-  return "Locations near you";
+  return "Events near you";
 }
 
 function renderEventFilters(summary = null) {
@@ -127,6 +127,7 @@ function renderEventFilters(summary = null) {
         <p class="panel-label">${escapeHtml(heading.eyebrow)}</p>
         <h2>${escapeHtml(heading.title)}</h2>
         ${heading.description ? `<p>${escapeHtml(heading.description)}</p>` : ""}
+        ${eventState.locationNote ? `<p class="events-toolbar__location-note">${escapeHtml(eventState.locationNote)}</p>` : ""}
       </div>
       <div class="event-filter-group">
         <p class="panel-label">Updated</p>
@@ -627,10 +628,10 @@ function placeLabel(event) {
 
 function eventMicrocopy(event) {
   const host = event.creator_nickname || "Someone";
-  if (event.team_name) {
-    return `${event.team_name} hosting · ${host}${event.team_member_count ? ` + ${event.team_member_count} crew` : ""}`;
-  }
-  return `Hosted by ${host}`;
+  const crewSuffix = event.team_member_count ? ` + ${event.team_member_count} crew` : "";
+  return event.team_name
+    ? `${event.team_name} hosting · ${host}${crewSuffix}`
+    : `Hosted by ${host}${crewSuffix}`;
 }
 
 function surfaceClassForEvent(event) {
@@ -647,8 +648,8 @@ function updateEventsFootnote() {
   if (!footnote) return;
 
   footnote.textContent = eventState.error
-    ? "The website only shows public events created through the mobile event planner."
-    : "Only public events created in the mobile app are shown here, using the same live source data as the app.";
+    ? "Browse public events here."
+    : "Browse upcoming and recent public events here.";
 }
 
 function attendeeMarkup(registration) {
@@ -717,7 +718,7 @@ function eventDetailsMarkup(event) {
             ? `
               <div class="event-detail-item">
                 <span>Team</span>
-                <strong>${escapeHtml(event.team_name)}</strong>
+                <strong>${escapeHtml(event.team_name)}${event.team_member_count ? ` · ${escapeHtml(String(event.team_member_count))} crew` : ""}</strong>
               </div>
             `
             : ""
@@ -752,14 +753,20 @@ function eventCardMarkup(event) {
       ${
         hasPhoto
           ? `
-            <img
-              class="event-card__bg-image"
-              src="${escapeHtml(event.meeting_point_photo_url)}"
-              alt="${escapeHtml(placeLabel(event))}"
-              loading="lazy"
-              decoding="async"
-              referrerpolicy="no-referrer"
-            />
+            <div class="event-card__photo-stage" aria-hidden="true">
+              <div class="event-card__photo-accent"></div>
+              <figure class="event-card__photo-card">
+                <img
+                  class="event-card__photo-image"
+                  src="${escapeHtml(event.meeting_point_photo_url)}"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  referrerpolicy="no-referrer"
+                />
+              </figure>
+            </div>
+            <div class="event-card__photo-spacer" aria-hidden="true"></div>
           `
           : `
             <div class="event-card__backdrop event-card__backdrop--${surfaceClass}">
@@ -769,20 +776,13 @@ function eventCardMarkup(event) {
             </div>
           `
       }
-      ${
-        hasPhoto
-          ? `
-            <div class="event-card__photo-overlay" aria-hidden="true"></div>
-          `
-          : ""
-      }
       <div class="event-card__content event-card__content--live">
         <div class="event-card__title-group">
           <h3>${escapeHtml(event.title)}</h3>
           <p>${escapeHtml(placeLabel(event))}</p>
         </div>
         <div class="event-card__meta">
-          <span>${escapeHtml(detailWhenLabel(event.scheduled_for))}</span>
+          <span>${escapeHtml(timeLabel(event))}</span>
           ${showDistance ? `<span>${escapeHtml(distanceLabel(event.distance_m))}</span>` : ""}
           <div class="player-stack" aria-hidden="true">${playerStack(event.registration_count)}</div>
         </div>
@@ -790,16 +790,15 @@ function eventCardMarkup(event) {
         ${
           event.plan_note
             ? `<p class="event-card__intro">${escapeHtml(event.plan_note)}</p>`
-            : '<p class="event-card__intro">Published from the mobile app and synced directly to the website.</p>'
+            : '<p class="event-card__intro">See the venue, timing, and turnout for this live session.</p>'
         }
         <div class="event-card__stats">
           <span class="event-stat">${event.registration_count} going</span>
           ${event.team_member_count ? `<span class="event-stat">${event.team_member_count} in crew</span>` : ""}
-          <span class="event-stat">${escapeHtml(event.status)}</span>
         </div>
         <div class="event-card__footer">
           <button class="button button--secondary" type="button" data-event-toggle="${event.id}">
-            ${isExpanded ? "Hide details" : "See details"}
+            ${isExpanded ? "Hide details" : "View details"}
           </button>
         </div>
         ${isExpanded ? eventDetailsMarkup(event) : ""}
@@ -814,7 +813,7 @@ function eventSectionMarkup(title, eyebrow, rows) {
       <div class="events-subsection__head">
         <p class="panel-label">${escapeHtml(eyebrow)}</p>
         <h2>${escapeHtml(title)}</h2>
-        <p>${escapeHtml(`Showing ${rows.length} live event${rows.length === 1 ? "" : "s"} from the mobile planner.`)}</p>
+        <p>${escapeHtml(`Showing ${rows.length} public event${rows.length === 1 ? "" : "s"} available to browse now.`)}</p>
       </div>
       <div class="events-subsection__grid">
         ${rows.map((event) => eventCardMarkup(event)).join("")}
@@ -841,7 +840,7 @@ function renderEvents() {
       <article class="events-empty">
         <p class="panel-label">${escapeHtml(locationsHeadingTitle())}</p>
         <h3>${escapeHtml(locationsHeadingTitle())}</h3>
-        <p>Only app-created public events will appear here.</p>
+        <p>Loading events now.</p>
       </article>
     `;
     return;
@@ -868,14 +867,14 @@ function renderEvents() {
     renderEventFilters({
       eyebrow: "Live events",
       title: "Events",
-      description: "Only app-created public events show up here.",
+      description: "Public events will appear here as they become available.",
     });
     updateEventsFootnote();
     grid.innerHTML = `
       <article class="events-empty">
         <p class="panel-label">No live events yet</p>
-        <h3>Nothing nearby has been posted from the mobile app.</h3>
-        <p>When someone publishes a public event in the app, it will show up here automatically.</p>
+        <h3>Nothing nearby is open right now.</h3>
+        <p>Check back soon for upcoming sessions and recent activity.</p>
       </article>
     `;
     return;
@@ -889,7 +888,7 @@ function renderEvents() {
     renderEventFilters({
       eyebrow: "Upcoming",
       title: "Scheduled soon",
-      description: `Showing ${upcomingEvents.length} live event${upcomingEvents.length === 1 ? "" : "s"} from the mobile planner.`,
+      description: `Showing ${upcomingEvents.length} live event${upcomingEvents.length === 1 ? "" : "s"} happening soon.`,
     });
     sections.push(`
       <section class="events-subsection">
@@ -902,7 +901,7 @@ function renderEvents() {
     renderEventFilters({
       eyebrow: "Recent",
       title: "Recent action",
-      description: `Showing ${recentEvents.length} live event${recentEvents.length === 1 ? "" : "s"} from the mobile planner.`,
+      description: `Showing ${recentEvents.length} recent event${recentEvents.length === 1 ? "" : "s"}.`,
     });
   }
 
