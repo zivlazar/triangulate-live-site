@@ -172,6 +172,15 @@
           const msg = preview.data && preview.data.error ? preview.data.error : 'Could not load event details.'
           return showError('Link issue', msg)
         }
+        // Terminal states (already approved / already rejected / done etc.)
+        // come back with ok=true, terminal=true — show the status message
+        // instead of the confirm form since there's nothing left to decide.
+        if (preview.data && preview.data.terminal) {
+          return showSuccess(
+            preview.data.title || 'Done',
+            preview.data.message || 'This event has already been handled.'
+          )
+        }
         const ev = preview.data.event || {}
         const verb = action === 'approve' ? 'approve' : 'reject'
         const Verb = verb[0].toUpperCase() + verb.slice(1)
