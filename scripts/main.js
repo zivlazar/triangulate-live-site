@@ -793,7 +793,7 @@ function eventCardMarkup(event) {
             : '<p class="event-card__intro">See the venue, timing, and turnout for this live session.</p>'
         }
         <div class="event-card__stats">
-          <span class="event-stat">${event.registration_count} going</span>
+          ${event.registration_count > 0 ? `<span class="event-stat">${event.registration_count} going</span>` : ""}
           ${event.team_member_count ? `<span class="event-stat">${event.team_member_count} in crew</span>` : ""}
         </div>
         <div class="event-card__footer">
