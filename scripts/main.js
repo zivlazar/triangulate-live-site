@@ -668,6 +668,8 @@ function eventDetailsMarkup(event) {
   const registrationState = eventState.registrations.get(event.id);
   const isLoadingRegistrations = eventState.registrationsLoading.has(event.id);
   const showDistance = hasViewerLocation();
+  const hasRegistrants = Boolean(registrationState?.rows?.length);
+  const shouldShowRegistrants = isLoadingRegistrations || Boolean(registrationState?.error) || hasRegistrants;
 
   let attendeeContent = '<p class="event-detail__hint">Nobody has RSVP’d yet.</p>';
   if (isLoadingRegistrations) {
@@ -734,10 +736,16 @@ function eventDetailsMarkup(event) {
           `
           : ""
       }
-      <div class="event-detail-copy">
-        <span>Who’s going</span>
-        ${attendeeContent}
-      </div>
+      ${
+        shouldShowRegistrants
+          ? `
+            <div class="event-detail-copy">
+              <span>Who’s going</span>
+              ${attendeeContent}
+            </div>
+          `
+          : ""
+      }
     </div>
   `;
 }
