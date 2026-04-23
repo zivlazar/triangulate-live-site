@@ -29,3 +29,6 @@ verify_enabled = false
 
 [functions.social-publish-approved]
 verify_jwt = true
+
+[functions.social-publish-settings]
+verify_jwt = true

@@ -70,7 +70,8 @@ node scripts/social_publish_queue.mjs
 ```
 
 The dashboard signs in `triangulate.game@gmail.com` with Supabase email auth, reads
-`data/social-approval-queue.json`, and stores approval decisions in the browser until exported.
+`data/social-approval-queue.json`, stores approval decisions in the browser until exported, and includes a
+server-side publishing settings form for Instagram/TikTok credentials.
 
 Direct publishing is routed through the Supabase Edge Function at:
 
@@ -86,7 +87,7 @@ supabase link --project-ref wnkbkgnydrmwgudbdqin
 supabase functions deploy social-publish-approved --project-ref wnkbkgnydrmwgudbdqin --use-api
 ```
 
-Set secrets with `supabase secrets set` before turning dry-run off:
+Bootstrap secrets can still be set with `supabase secrets set`:
 
 ```sh
 supabase secrets set ADMIN_EMAIL=triangulate.game@gmail.com --project-ref wnkbkgnydrmwgudbdqin
@@ -99,6 +100,16 @@ Required Supabase function secrets:
 - `SUPABASE_URL`.
 - `SUPABASE_ANON_KEY`.
 - `SOCIAL_PUBLISH_DRY_RUN`, defaults to `true`. Set to `false` only after testing.
+
+Instagram publishing credentials can now be supplied either:
+
+- in the admin portal settings form at `admin-social.html`, stored server-side in the live Supabase project, or
+- as project secrets via `supabase secrets set`.
+
+TikTok publishing credentials can now be supplied either:
+
+- in the admin portal settings form at `admin-social.html`, stored server-side in the live Supabase project, or
+- as project secrets via `supabase secrets set`.
 
 Instagram publishing secrets:
 

@@ -1672,6 +1672,114 @@ body[data-page="home"] .hero-overlay-card {
   font-weight: 900;
 }
 
+.admin-settings-shell {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.admin-settings-panel,
+.admin-connection-card,
+.admin-settings-form__section {
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid rgba(255, 255, 255, 0.96);
+  border-radius: 28px;
+  box-shadow: var(--card-shadow);
+}
+
+.admin-settings-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem 1.2rem;
+}
+
+.admin-connection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.admin-connection-card {
+  padding: 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-connection-card span {
+  color: var(--ink-subtle);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+}
+
+.admin-connection-card strong {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.admin-connection-card p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.admin-connection-card--ok {
+  background: linear-gradient(180deg, rgba(247, 255, 233, 0.98), rgba(255, 255, 255, 0.95));
+}
+
+.admin-connection-card--warn {
+  background: linear-gradient(180deg, rgba(255, 247, 223, 0.98), rgba(255, 255, 255, 0.95));
+}
+
+.admin-settings-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-settings-form__section {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.admin-settings-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-checkbox-field {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.admin-checkbox-field input,
+.admin-settings-form select {
+  accent-color: var(--navy);
+}
+
+.admin-settings-form select {
+  width: 100%;
+  border: 2px solid rgba(20, 83, 174, 0.16);
+  border-radius: 16px;
+  padding: 0.8rem 0.9rem;
+  color: var(--ink);
+  font: inherit;
+  background: #fff;
+}
+
+.admin-settings-form select:focus {
+  outline: 3px solid rgba(82, 216, 255, 0.28);
+  border-color: var(--navy);
+}
+
 .events-section {
   background:
     radial-gradient(circle at 84% 12%, rgba(255, 255, 255, 0.34), transparent 12%),
@@ -2906,7 +3014,9 @@ body[data-page="events"] .events-grid--listing .event-card {
     align-items: stretch;
   }
 
-  .admin-summary-grid {
+  .admin-summary-grid,
+  .admin-connection-grid,
+  .admin-settings-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2929,6 +3039,16 @@ body[data-page="events"] .events-grid--listing .event-card {
   }
 
   .contact-form__actions {
+    align-items: stretch;
+  }
+
+  .admin-summary-grid,
+  .admin-connection-grid,
+  .admin-settings-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-settings-form__actions {
     align-items: stretch;
   }
 

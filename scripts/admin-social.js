@@ -4,12 +4,14 @@ import { SUPABASE_KEY, SUPABASE_URL } from "./site-config.js";
 const ADMIN_EMAIL = "triangulate.game@gmail.com";
 const QUEUE_URL = "./data/social-approval-queue.json";
 const PUBLISH_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/social-publish-approved`;
+const SETTINGS_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/social-publish-settings`;
 const ACCESS_TOKEN_KEY = "triangulate_social_admin_access_token";
 const DECISION_KEY_PREFIX = "triangulate_social_admin_decisions:";
 
 const state = {
   authedEmail: "",
   queuePayload: null,
+  publishSettings: null,
   decisions: {},
   filter: "all",
 };
@@ -22,6 +24,25 @@ const els = {
   dashboard: document.getElementById("admin-dashboard"),
   statusCard: document.getElementById("admin-status-card"),
   statusCopy: document.getElementById("admin-status-copy"),
+  settingsForm: document.getElementById("admin-settings-form"),
+  settingsSummary: document.getElementById("admin-settings-summary"),
+  settingsStatus: document.getElementById("admin-settings-status"),
+  connectionGrid: document.getElementById("admin-connection-grid"),
+  settingsSave: document.getElementById("admin-settings-save"),
+  instagramUserId: document.getElementById("instagram-user-id"),
+  instagramAccessToken: document.getElementById("instagram-access-token"),
+  instagramClearToken: document.getElementById("instagram-clear-token"),
+  instagramGraphBase: document.getElementById("instagram-graph-base"),
+  tiktokAccessToken: document.getElementById("tiktok-access-token"),
+  tiktokClearToken: document.getElementById("tiktok-clear-token"),
+  tiktokPrivacyLevel: document.getElementById("tiktok-privacy-level"),
+  publishDryRun: document.getElementById("publish-dry-run"),
+  tiktokDisableComment: document.getElementById("tiktok-disable-comment"),
+  tiktokDisableDuet: document.getElementById("tiktok-disable-duet"),
+  tiktokDisableStitch: document.getElementById("tiktok-disable-stitch"),
+  tiktokBrandContentToggle: document.getElementById("tiktok-brand-content-toggle"),
+  tiktokBrandOrganicToggle: document.getElementById("tiktok-brand-organic-toggle"),
+  tiktokIsAigc: document.getElementById("tiktok-is-aigc"),
   queueTitle: document.getElementById("admin-queue-title"),
   queueMeta: document.getElementById("admin-queue-meta"),
   summaryGrid: document.getElementById("admin-summary-grid"),
@@ -63,6 +84,11 @@ function setDashboardStatus(message, kind = "info") {
   els.dashboardStatus.dataset.kind = kind;
 }
 
+function setSettingsStatus(message, kind = "info") {
+  els.settingsStatus.textContent = message;
+  els.settingsStatus.dataset.kind = kind;
+}
+
 function setAccessState(email) {
   state.authedEmail = email;
   const isAuthed = email.toLowerCase() === ADMIN_EMAIL;
@@ -70,7 +96,7 @@ function setAccessState(email) {
   els.dashboard.hidden = !isAuthed;
   els.statusCard.classList.toggle("admin-status-card--ok", isAuthed);
   els.statusCopy.textContent = isAuthed
-    ? `Signed in as ${email}. Review decisions stay local until exported.`
+    ? `Signed in as ${email}. Review decisions stay local until exported, and publish credentials stay server-side in Supabase.`
     : "Sign in with the approved admin email to review the queue.";
 }
 
@@ -364,6 +390,147 @@ async function loadQueue() {
   setDashboardStatus("Queue loaded. Approvals are saved on this browser and can be exported.", "success");
 }
 
+function renderConnectionStatusCard(label, ok, detail) {
+  return `
+    <article class="admin-connection-card ${ok ? "admin-connection-card--ok" : "admin-connection-card--warn"}">
+      <span>${escapeHtml(label)}</span>
+      <strong>${ok ? "Ready" : "Needs setup"}</strong>
+      <p>${escapeHtml(detail)}</p>
+    </article>
+  `;
+}
+
+function renderPublishSettings() {
+  const settings = state.publishSettings;
+  if (!settings) {
+    els.settingsSummary.textContent = "Could not load publish settings.";
+    els.connectionGrid.innerHTML = "";
+    return;
+  }
+
+  const modeLabel = settings.dryRun ? "Dry-run is still on." : "Live publishing is enabled.";
+  const updatedLabel = settings.updatedAt
+    ? `Last updated ${new Date(settings.updatedAt).toLocaleString("en-GB")}${settings.updatedByEmail ? ` by ${settings.updatedByEmail}` : ""}.`
+    : "No saved portal overrides yet. Environment defaults will be used until you save settings here.";
+
+  els.settingsSummary.textContent = `${modeLabel} ${updatedLabel}`;
+  els.connectionGrid.innerHTML = [
+    renderConnectionStatusCard(
+      "Publishing mode",
+      !settings.dryRun,
+      settings.dryRun ? "Approved drafts will only simulate publishing until you switch dry-run off." : "Approved drafts can be sent live."
+    ),
+    renderConnectionStatusCard(
+      "Instagram",
+      settings.instagram?.configured,
+      settings.instagram?.configured
+        ? `Business account ${settings.instagram.userId || "configured"} is connected.`
+        : "Add both an Instagram access token and business account ID."
+    ),
+    renderConnectionStatusCard(
+      "TikTok",
+      settings.tiktok?.configured,
+      settings.tiktok?.configured
+        ? `TikTok token saved with ${settings.tiktok.privacyLevel || "SELF_ONLY"} privacy.`
+        : "Add a TikTok access token to publish videos."
+    ),
+  ].join("");
+
+  els.instagramUserId.value = settings.instagram?.userId || "";
+  els.instagramGraphBase.value = settings.instagram?.graphBase || "https://graph.facebook.com/v24.0";
+  els.instagramAccessToken.value = "";
+  els.instagramClearToken.checked = false;
+  els.tiktokAccessToken.value = "";
+  els.tiktokClearToken.checked = false;
+  els.tiktokPrivacyLevel.value = settings.tiktok?.privacyLevel || "SELF_ONLY";
+  els.publishDryRun.checked = Boolean(settings.dryRun);
+  els.tiktokDisableComment.checked = Boolean(settings.tiktok?.disableComment);
+  els.tiktokDisableDuet.checked = Boolean(settings.tiktok?.disableDuet);
+  els.tiktokDisableStitch.checked = Boolean(settings.tiktok?.disableStitch);
+  els.tiktokBrandContentToggle.checked = Boolean(settings.tiktok?.brandContentToggle);
+  els.tiktokBrandOrganicToggle.checked = settings.tiktok?.brandOrganicToggle !== false;
+  els.tiktokIsAigc.checked = Boolean(settings.tiktok?.isAigc);
+}
+
+async function loadPublishSettings() {
+  const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token) {
+    throw new Error("Sign in again before loading publishing settings.");
+  }
+
+  const res = await fetch(SETTINGS_FUNCTION_URL, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || body.ok === false) {
+    throw new Error(body.error || "Could not load publishing settings.");
+  }
+
+  state.publishSettings = body.settings || null;
+  renderPublishSettings();
+}
+
+async function savePublishSettings() {
+  const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token) {
+    setSettingsStatus("Sign in again before saving publish settings.", "error");
+    return;
+  }
+
+  els.settingsSave.disabled = true;
+  setSettingsStatus("Saving publish settings to the backend...", "info");
+
+  try {
+    const res = await fetch(SETTINGS_FUNCTION_URL, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        settings: {
+          dryRun: els.publishDryRun.checked,
+          instagramUserId: els.instagramUserId.value.trim(),
+          instagramAccessToken: els.instagramAccessToken.value.trim(),
+          clearInstagramToken: els.instagramClearToken.checked,
+          instagramGraphBase: els.instagramGraphBase.value.trim(),
+          tiktokAccessToken: els.tiktokAccessToken.value.trim(),
+          clearTiktokToken: els.tiktokClearToken.checked,
+          tiktokPrivacyLevel: els.tiktokPrivacyLevel.value,
+          tiktokDisableComment: els.tiktokDisableComment.checked,
+          tiktokDisableDuet: els.tiktokDisableDuet.checked,
+          tiktokDisableStitch: els.tiktokDisableStitch.checked,
+          tiktokBrandContentToggle: els.tiktokBrandContentToggle.checked,
+          tiktokBrandOrganicToggle: els.tiktokBrandOrganicToggle.checked,
+          tiktokIsAigc: els.tiktokIsAigc.checked,
+        },
+      }),
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || body.ok === false) {
+      throw new Error(body.error || "Could not save publishing settings.");
+    }
+
+    state.publishSettings = body.settings || null;
+    renderPublishSettings();
+    setSettingsStatus(
+      state.publishSettings?.dryRun
+        ? "Settings saved. Dry-run is still on."
+        : "Settings saved. Live publishing is now enabled for configured platforms.",
+      "success"
+    );
+  } catch (error) {
+    setSettingsStatus(error instanceof Error ? error.message : "Could not save publishing settings.", "error");
+  } finally {
+    els.settingsSave.disabled = false;
+  }
+}
+
 function exportDecisions() {
   const payload = {
     exportedAt: new Date().toISOString(),
@@ -468,6 +635,10 @@ function bindEvents() {
 
   els.export.addEventListener("click", exportDecisions);
   els.publish.addEventListener("click", publishApproved);
+  els.settingsForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await savePublishSettings();
+  });
 
   els.reset.addEventListener("click", () => {
     localStorage.removeItem(decisionsKey());
@@ -520,9 +691,11 @@ async function init() {
   if (!authed) return;
 
   try {
-    await loadQueue();
+    await Promise.all([loadQueue(), loadPublishSettings()]);
   } catch (error) {
-    setDashboardStatus(error instanceof Error ? error.message : "Could not load queue.", "error");
+    const message = error instanceof Error ? error.message : "Could not load admin data.";
+    setDashboardStatus(message, "error");
+    setSettingsStatus(message, "error");
   }
 }
 

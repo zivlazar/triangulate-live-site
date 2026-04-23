@@ -40,6 +40,12 @@ function env(name: string, fallback = "") {
   return Deno.env.get(name) || fallback;
 }
 
+function envBoolean(name: string) {
+  const value = Deno.env.get(name);
+  if (value == null || value === "") return null;
+  return value === "true";
+}
+
 function captionFor(item: PublishItem) {
   const useFallback = item.decision.copyMode === "general" && item.draft.fallbackCopy;
   const caption = useFallback ? item.draft.fallbackCopy?.caption : item.draft.caption;
@@ -71,6 +77,24 @@ async function verifyAdmin(req: Request) {
   return email;
 }
 
+async function loadStoredSettings() {
+  const supabaseUrl = env("SUPABASE_URL");
+  const serviceRoleKey = env("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) return null;
+
+  const res = await fetch(`${supabaseUrl}/rest/v1/social_publish_settings?id=eq.1&select=*`, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      Accept: "application/json",
+    },
+  });
+  if (!res.ok) return null;
+
+  const rows = await res.json().catch(() => []);
+  return Array.isArray(rows) ? rows[0] || null : null;
+}
+
 function mediaKind(item: PublishItem) {
   const channel = String(item.draft.channel || "").toLowerCase();
   const mediaUrl = String(item.decision.mediaUrl || "");
@@ -87,11 +111,17 @@ function assertMediaUrl(item: PublishItem) {
   return mediaUrl;
 }
 
-async function publishInstagram(item: PublishItem) {
-  const accessToken = env("INSTAGRAM_ACCESS_TOKEN");
-  const userId = env("INSTAGRAM_USER_ID") || env("INSTAGRAM_BUSINESS_ACCOUNT_ID");
-  const graphBase = env("INSTAGRAM_GRAPH_BASE", "https://graph.facebook.com/v24.0").replace(/\/$/, "");
-  const dryRun = env("SOCIAL_PUBLISH_DRY_RUN", "true") !== "false";
+async function publishInstagram(item: PublishItem, storedSettings: Record<string, unknown> | null) {
+  const accessToken = String(storedSettings?.instagram_access_token || "") || env("INSTAGRAM_ACCESS_TOKEN");
+  const userId =
+    String(storedSettings?.instagram_user_id || "") || env("INSTAGRAM_USER_ID") || env("INSTAGRAM_BUSINESS_ACCOUNT_ID");
+  const graphBase = (
+    String(storedSettings?.instagram_graph_base || "") || env("INSTAGRAM_GRAPH_BASE", "https://graph.facebook.com/v24.0")
+  ).replace(/\/$/, "");
+  const dryRun =
+    typeof storedSettings?.dry_run === "boolean"
+      ? storedSettings.dry_run
+      : env("SOCIAL_PUBLISH_DRY_RUN", "true") !== "false";
 
   if (!accessToken || !userId) throw new Error("Instagram publishing credentials are not configured.");
 
@@ -157,9 +187,12 @@ async function publishInstagram(item: PublishItem) {
   };
 }
 
-async function publishTikTok(item: PublishItem) {
-  const accessToken = env("TIKTOK_ACCESS_TOKEN");
-  const dryRun = env("SOCIAL_PUBLISH_DRY_RUN", "true") !== "false";
+async function publishTikTok(item: PublishItem, storedSettings: Record<string, unknown> | null) {
+  const accessToken = String(storedSettings?.tiktok_access_token || "") || env("TIKTOK_ACCESS_TOKEN");
+  const dryRun =
+    typeof storedSettings?.dry_run === "boolean"
+      ? storedSettings.dry_run
+      : env("SOCIAL_PUBLISH_DRY_RUN", "true") !== "false";
   if (!accessToken) throw new Error("TikTok publishing credentials are not configured.");
 
   const mediaUrl = assertMediaUrl(item);
@@ -168,13 +201,31 @@ async function publishTikTok(item: PublishItem) {
   const payload = {
     post_info: {
       title: captionFor(item).slice(0, 2200),
-      privacy_level: env("TIKTOK_PRIVACY_LEVEL", "SELF_ONLY"),
-      disable_duet: env("TIKTOK_DISABLE_DUET", "false") === "true",
-      disable_comment: env("TIKTOK_DISABLE_COMMENT", "false") === "true",
-      disable_stitch: env("TIKTOK_DISABLE_STITCH", "false") === "true",
-      brand_content_toggle: env("TIKTOK_BRAND_CONTENT_TOGGLE", "false") === "true",
-      brand_organic_toggle: env("TIKTOK_BRAND_ORGANIC_TOGGLE", "true") === "true",
-      is_aigc: env("TIKTOK_IS_AIGC", "false") === "true",
+      privacy_level: String(storedSettings?.tiktok_privacy_level || "") || env("TIKTOK_PRIVACY_LEVEL", "SELF_ONLY"),
+      disable_duet:
+        typeof storedSettings?.tiktok_disable_duet === "boolean"
+          ? storedSettings.tiktok_disable_duet
+          : env("TIKTOK_DISABLE_DUET", "false") === "true",
+      disable_comment:
+        typeof storedSettings?.tiktok_disable_comment === "boolean"
+          ? storedSettings.tiktok_disable_comment
+          : env("TIKTOK_DISABLE_COMMENT", "false") === "true",
+      disable_stitch:
+        typeof storedSettings?.tiktok_disable_stitch === "boolean"
+          ? storedSettings.tiktok_disable_stitch
+          : env("TIKTOK_DISABLE_STITCH", "false") === "true",
+      brand_content_toggle:
+        typeof storedSettings?.tiktok_brand_content_toggle === "boolean"
+          ? storedSettings.tiktok_brand_content_toggle
+          : env("TIKTOK_BRAND_CONTENT_TOGGLE", "false") === "true",
+      brand_organic_toggle:
+        typeof storedSettings?.tiktok_brand_organic_toggle === "boolean"
+          ? storedSettings.tiktok_brand_organic_toggle
+          : env("TIKTOK_BRAND_ORGANIC_TOGGLE", "true") === "true",
+      is_aigc:
+        typeof storedSettings?.tiktok_is_aigc === "boolean"
+          ? storedSettings.tiktok_is_aigc
+          : env("TIKTOK_IS_AIGC", "false") === "true",
     },
     source_info: {
       source: "PULL_FROM_URL",
@@ -210,10 +261,10 @@ async function publishTikTok(item: PublishItem) {
   };
 }
 
-async function publishItem(item: PublishItem) {
+async function publishItem(item: PublishItem, storedSettings: Record<string, unknown> | null) {
   const channel = String(item.draft.channel || "").toLowerCase();
-  if (channel.includes("tiktok")) return publishTikTok(item);
-  if (channel.includes("instagram")) return publishInstagram(item);
+  if (channel.includes("tiktok")) return publishTikTok(item, storedSettings);
+  if (channel.includes("instagram")) return publishInstagram(item, storedSettings);
   return {
     platform: "unknown",
     status: "skipped_unknown_channel",
@@ -226,6 +277,7 @@ Deno.serve(async (req) => {
 
   try {
     const adminEmail = await verifyAdmin(req);
+    const storedSettings = await loadStoredSettings();
     const body = await req.json();
     const drafts = Array.isArray(body.drafts) ? body.drafts : [];
     if (!drafts.length) throw new Error("No approved drafts supplied.");
@@ -235,7 +287,7 @@ Deno.serve(async (req) => {
       try {
         results.push({
           index: item.index,
-          ...(await publishItem(item)),
+          ...(await publishItem(item, storedSettings)),
         });
       } catch (error) {
         results.push({
@@ -250,7 +302,10 @@ Deno.serve(async (req) => {
     return json({
       ok: true,
       adminEmail,
-      dryRun: env("SOCIAL_PUBLISH_DRY_RUN", "true") !== "false",
+      dryRun:
+        typeof storedSettings?.dry_run === "boolean"
+          ? storedSettings.dry_run
+          : envBoolean("SOCIAL_PUBLISH_DRY_RUN") ?? true,
       queueFile: body.queueFile || "",
       results,
     });

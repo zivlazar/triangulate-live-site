@@ -14,7 +14,7 @@
       rel="stylesheet"
     />
     <link rel="icon" type="image/png" href="./assets/app/favicon.png" />
-    <link rel="stylesheet" href="./styles/site.css?v=202604231450" />
+    <link rel="stylesheet" href="./styles/site.css?v=202604231710" />
   </head>
   <body data-page="admin-social">
     <div class="site-shell">
@@ -78,6 +78,107 @@
             </section>
 
             <section class="admin-dashboard" id="admin-dashboard" hidden>
+              <section class="admin-settings-shell">
+                <div class="admin-settings-panel">
+                  <div>
+                    <p class="panel-label">Publishing setup</p>
+                    <h2>Platform connections</h2>
+                    <p id="admin-settings-summary">Checking Supabase publish settings...</p>
+                  </div>
+                  <div class="admin-connection-grid" id="admin-connection-grid"></div>
+                </div>
+
+                <form class="admin-settings-form" id="admin-settings-form">
+                  <div class="admin-settings-form__section">
+                    <p class="panel-label">Instagram</p>
+                    <label class="admin-notes-field">
+                      <span>Business account ID</span>
+                      <input id="instagram-user-id" type="text" autocomplete="off" placeholder="1784..." />
+                    </label>
+                    <label class="admin-notes-field">
+                      <span>Access token</span>
+                      <input
+                        id="instagram-access-token"
+                        type="password"
+                        autocomplete="new-password"
+                        placeholder="Paste a new Instagram token to replace the stored one"
+                      />
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="instagram-clear-token" type="checkbox" />
+                      <span>Clear stored Instagram token</span>
+                    </label>
+                    <label class="admin-notes-field">
+                      <span>Graph base URL</span>
+                      <input id="instagram-graph-base" type="url" placeholder="https://graph.facebook.com/v24.0" />
+                    </label>
+                  </div>
+
+                  <div class="admin-settings-form__section">
+                    <p class="panel-label">TikTok</p>
+                    <label class="admin-notes-field">
+                      <span>Access token</span>
+                      <input
+                        id="tiktok-access-token"
+                        type="password"
+                        autocomplete="new-password"
+                        placeholder="Paste a new TikTok token to replace the stored one"
+                      />
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="tiktok-clear-token" type="checkbox" />
+                      <span>Clear stored TikTok token</span>
+                    </label>
+                    <label class="admin-notes-field">
+                      <span>Privacy level</span>
+                      <select id="tiktok-privacy-level">
+                        <option value="SELF_ONLY">SELF_ONLY</option>
+                        <option value="MUTUAL_FOLLOW_FRIENDS">MUTUAL_FOLLOW_FRIENDS</option>
+                        <option value="FOLLOWER_OF_CREATOR">FOLLOWER_OF_CREATOR</option>
+                        <option value="PUBLIC_TO_EVERYONE">PUBLIC_TO_EVERYONE</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <div class="admin-settings-form__section">
+                    <p class="panel-label">Publishing mode</p>
+                    <label class="admin-checkbox-field">
+                      <input id="publish-dry-run" type="checkbox" />
+                      <span>Keep publishing in dry-run mode</span>
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="tiktok-disable-comment" type="checkbox" />
+                      <span>Disable TikTok comments</span>
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="tiktok-disable-duet" type="checkbox" />
+                      <span>Disable TikTok duet</span>
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="tiktok-disable-stitch" type="checkbox" />
+                      <span>Disable TikTok stitch</span>
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="tiktok-brand-content-toggle" type="checkbox" />
+                      <span>Brand content toggle</span>
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="tiktok-brand-organic-toggle" type="checkbox" />
+                      <span>Brand organic toggle</span>
+                    </label>
+                    <label class="admin-checkbox-field">
+                      <input id="tiktok-is-aigc" type="checkbox" />
+                      <span>Mark TikTok uploads as AI-generated</span>
+                    </label>
+                  </div>
+
+                  <div class="admin-settings-form__actions">
+                    <button class="button button--secondary" type="submit" id="admin-settings-save">Save publish settings</button>
+                    <p class="admin-inline-status" id="admin-settings-status" aria-live="polite"></p>
+                  </div>
+                </form>
+              </section>
+
               <div class="admin-dashboard__toolbar">
                 <div>
                   <p class="panel-label">Approval queue</p>
@@ -118,7 +219,7 @@
       </footer>
     </div>
 
-    <script type="module" src="./scripts/admin-social.js?v=202604231450"></script>
+    <script type="module" src="./scripts/admin-social.js?v=202604231710"></script>
     <script src="./scripts/nav.js?v=1776436676" defer></script>
   </body>
 </html>
