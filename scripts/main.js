@@ -40,18 +40,20 @@ const EVENT_FALLBACK_CENTER = {
 const EVENT_RADIUS_KM = 50;
 const EVENT_LIMIT = 50;
 const EVENT_VIEWER_ID = "web-public-viewer";
+const INITIAL_EVENT_ID = new URLSearchParams(window.location.search).get("event") || "";
 
 const eventState = {
   center: { ...EVENT_FALLBACK_CENTER },
   autoLocateAttempted: false,
   error: "",
   events: [],
-  expandedEventId: "",
+  expandedEventId: INITIAL_EVENT_ID,
   lastUpdatedAt: null,
   loading: false,
   locationMode: "fallback",
   locationNote: "Showing public events now. Distances stay hidden until your location is available.",
   locating: false,
+  requestedEventId: INITIAL_EVENT_ID,
   registrations: new Map(),
   registrationsLoading: new Set(),
 };
@@ -91,6 +93,25 @@ function escapeHtml(value) {
         return char;
     }
   });
+}
+
+function eventUrl(eventId) {
+  const url = new URL(window.location.href);
+  url.pathname = url.pathname.replace(/[^/]*$/, "events.html");
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("event", eventId);
+  return url.toString();
+}
+
+function syncEventUrl(eventId) {
+  const url = new URL(window.location.href);
+  if (eventId) {
+    url.searchParams.set("event", eventId);
+  } else {
+    url.searchParams.delete("event");
+  }
+  window.history.replaceState({}, "", url);
 }
 
 function updatedTimeLabel(date) {
@@ -654,6 +675,15 @@ function updateEventsFootnote() {
     : "Browse upcoming and recent public events here.";
 }
 
+function scrollToEvent(eventId) {
+  window.requestAnimationFrame(() => {
+    const card = Array.from(document.querySelectorAll("[data-event-id]")).find(
+      (element) => element.dataset.eventId === eventId
+    );
+    card?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+}
+
 function attendeeMarkup(registration) {
   return `
     <li class="event-attendee">
@@ -757,9 +787,10 @@ function eventCardMarkup(event) {
   const surfaceClass = surfaceClassForEvent(event);
   const hasPhoto = Boolean(event.meeting_point_photo_url);
   const showDistance = hasViewerLocation();
+  const shareUrl = eventUrl(event.id);
 
   return `
-    <article class="event-card event-card--live${hasPhoto ? " event-card--with-photo" : ""}">
+    <article class="event-card event-card--live${hasPhoto ? " event-card--with-photo" : ""}" data-event-id="${escapeHtml(event.id)}">
       ${
         hasPhoto
           ? `
@@ -807,9 +838,12 @@ function eventCardMarkup(event) {
           ${event.team_member_count ? `<span class="event-stat">${event.team_member_count} in crew</span>` : ""}
         </div>
         <div class="event-card__footer">
-          <button class="button button--secondary" type="button" data-event-toggle="${event.id}">
+          <button class="button button--secondary" type="button" data-event-toggle="${escapeHtml(event.id)}">
             ${isExpanded ? "Hide details" : "View details"}
           </button>
+          <a class="button button--ghost" href="${escapeHtml(shareUrl)}">
+            Share event
+          </a>
         </div>
         ${isExpanded ? eventDetailsMarkup(event) : ""}
       </div>
@@ -928,6 +962,7 @@ async function refreshEvents(nextCenter = eventState.center) {
   eventState.error = "";
   eventState.center = { ...nextCenter };
   renderEvents();
+  let eventIdToReveal = "";
 
   try {
     const rows = await sbRpc("list_public_events_near", {
@@ -940,14 +975,24 @@ async function refreshEvents(nextCenter = eventState.center) {
     eventState.events = Array.isArray(rows) ? rows : [];
     eventState.lastUpdatedAt = new Date();
 
-    if (eventState.expandedEventId && !eventState.events.some((event) => event.id === eventState.expandedEventId)) {
+    if (eventState.requestedEventId && eventState.events.some((event) => event.id === eventState.requestedEventId)) {
+      eventState.expandedEventId = eventState.requestedEventId;
+      eventIdToReveal = eventState.requestedEventId;
+    } else if (eventState.expandedEventId && !eventState.events.some((event) => event.id === eventState.expandedEventId)) {
       eventState.expandedEventId = "";
+    } else if (eventState.expandedEventId) {
+      eventIdToReveal = eventState.expandedEventId;
     }
   } catch (error) {
     eventState.error = error instanceof Error ? error.message : "Could not load live events.";
   } finally {
     eventState.loading = false;
     renderEvents();
+  }
+
+  if (eventIdToReveal) {
+    await ensureRegistrations(eventIdToReveal);
+    scrollToEvent(eventIdToReveal);
   }
 }
 
@@ -1000,6 +1045,7 @@ async function locateEventsFromBrowser({ silent = false } = {}) {
 
 function autoLocateEvents() {
   if (eventState.autoLocateAttempted || !navigator.geolocation) return;
+  if (eventState.requestedEventId) return;
   eventState.autoLocateAttempted = true;
   void locateEventsFromBrowser({ silent: true });
 }
@@ -1063,10 +1109,13 @@ function bindEventsPage() {
       if (!eventId) return;
 
       eventState.expandedEventId = eventState.expandedEventId === eventId ? "" : eventId;
+      eventState.requestedEventId = eventState.expandedEventId;
+      syncEventUrl(eventState.expandedEventId);
       renderEvents();
 
       if (eventState.expandedEventId) {
         await ensureRegistrations(eventId);
+        scrollToEvent(eventId);
       }
     });
   }

@@ -100,7 +100,7 @@ function bindContactForm() {
     };
 
     try {
-      await submitFeedback(payload);
+      const result = await submitFeedback(payload);
       trackWebsiteEvent("contact_form_submitted", {
         source_page: window.location.pathname,
         has_phone_number: Boolean(payload.phoneNumber),
@@ -109,7 +109,12 @@ function bindContactForm() {
       });
       form.reset();
       updateWordCount();
-      setStatus("success", "Thanks — your message has been sent and a confirmation email is on its way.");
+      setStatus(
+        "success",
+        result?.emailSent
+          ? "Thanks — your message has been sent and a confirmation email is on its way."
+          : "Thanks — your message has been sent. We’ll reply as soon as we can."
+      );
     } catch (error) {
       setStatus("error", error instanceof Error ? error.message : "Unable to send your message right now.");
     } finally {

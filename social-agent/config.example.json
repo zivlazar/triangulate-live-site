@@ -13,6 +13,7 @@
   },
   "cadence": {
     "dailyOwnedPostTarget": 4,
+    "dailyGeneralPostTarget": 5,
     "storyFrameTarget": 4,
     "leadSuggestionTarget": 12
   },
@@ -21,7 +22,8 @@
     "allowAutoPosting": false,
     "allowAutoComments": false,
     "allowAutoLikes": false,
-    "useEventLevelFactsOnly": true
+    "useEventLevelFactsOnly": true,
+    "useLocalCopyOnlyWithPlatformLocationSignals": true
   },
   "leadTargets": [
     "local gaming events",

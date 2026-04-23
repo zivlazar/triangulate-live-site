@@ -7,7 +7,49 @@ import process from "node:process";
 const ROOT = process.cwd();
 const DEFAULT_CONFIG_PATH = path.join(ROOT, "social-agent", "config.example.json");
 const DEFAULT_OUT_DIR = path.join(ROOT, "social-agent", "out");
-const VIEWER_ID = "social-agent-public-viewer";
+const FALLBACK_TREND_SIGNALS = [
+  {
+    key: "real_world_play",
+    angle: "Games are becoming more social when the real place matters.",
+    publicHook: "Your local park can be more than a backdrop.",
+  },
+  {
+    key: "co_op_presence",
+    angle: "Co-op play feels stronger when teammates have to move and make decisions together.",
+    publicHook: "The best team chat is sometimes a sprint across open ground.",
+  },
+  {
+    key: "fast_mobile_sessions",
+    angle: "Mobile games are easier to try when the first session is quick, visible, and social.",
+    publicHook: "No long setup. No mystery rules. Just meet, move, and learn fast.",
+  },
+  {
+    key: "map_as_game_board",
+    angle: "Players are interested in games where maps become active play spaces.",
+    publicHook: "The map is not the menu. The map is the match.",
+  },
+  {
+    key: "team_strategy",
+    angle: "Team strategy is more exciting when positioning matters as much as speed.",
+    publicHook: "Fast helps. Shape wins.",
+  },
+  {
+    key: "outdoor_social",
+    angle: "Outdoor play is becoming a better answer to screen-only social games.",
+    publicHook: "Same phone. Very different Saturday.",
+  },
+];
+
+function trendSearchesForCity(city) {
+  return [
+    `${city} outdoor games`,
+    `${city} social sports`,
+    `${city} location based game`,
+    `${city} live action game experience`,
+    `${city} mobile game event`,
+    "location based AR game UK",
+  ];
+}
 
 const FALLBACK_EVENTS = [
   {
@@ -82,7 +124,7 @@ Usage:
 Options:
   --config <path>     Config JSON path. Defaults to social-agent/config.example.json
   --out <path>        Output directory. Defaults to social-agent/out
-  --offline           Do not fetch live events; use safe sample event ideas
+  --offline           Do not fetch live events or news signals; use safe samples
   --dry-run           Print summary without writing output files
   --city <name>       Override city label
   --lat <number>      Override event search latitude
@@ -153,7 +195,6 @@ async function fetchEvents(config, args) {
   const payload = {
     p_lat: config.location.lat,
     p_lng: config.location.lng,
-    p_viewer_id: VIEWER_ID,
     p_radius_km: config.location.radiusKm,
     p_limit: 50,
   };
@@ -185,6 +226,115 @@ async function fetchEvents(config, args) {
   return {
     events: publicEvents.length ? publicEvents : FALLBACK_EVENTS,
     source: publicEvents.length ? "supabase_live_events" : "offline_no_live_events",
+  };
+}
+
+function decodeXmlEntities(value) {
+  return String(value ?? "")
+    .replace(/<!\[CDATA\[|\]\]>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function cleanNewsTitle(title) {
+  return decodeXmlEntities(title)
+    .replace(/\s+-\s+[^-]+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function signalFromTitle(title) {
+  const lower = title.toLowerCase();
+  if (/(location|gps|geospatial|map|maps|ar|xr|mixed reality|augmented)/.test(lower)) {
+    return {
+      key: "map_as_game_board",
+      angle: "Current game talk keeps circling back to maps, places, and real-world context.",
+      publicHook: "The map is not the menu. The map is the match.",
+    };
+  }
+  if (/(co-op|coop|multiplayer|proximity|team|squad|party|voice)/.test(lower)) {
+    return {
+      key: "co_op_presence",
+      angle: "Co-op and multiplayer games are leaning into shared presence and team moments.",
+      publicHook: "Your team should feel close because they actually are.",
+    };
+  }
+  if (/(mobile|free-to-play|test|limited|drop|launch|short)/.test(lower)) {
+    return {
+      key: "fast_mobile_sessions",
+      angle: "Mobile game launches and tests are rewarding ideas that are quick to understand.",
+      publicHook: "If the idea is good, people should feel it in the first minute.",
+    };
+  }
+  if (/(live|venue|immersive|experience|outdoor|walking|fitness|hunt)/.test(lower)) {
+    return {
+      key: "real_world_play",
+      angle: "Live and location-aware play keeps pushing games out of static screens.",
+      publicHook: "Some games make more sense once you step outside.",
+    };
+  }
+  if (/(pvp|strategy|faction|territory|battle|raid|capture)/.test(lower)) {
+    return {
+      key: "team_strategy",
+      angle: "Strategy games are more memorable when space, timing, and pressure all matter.",
+      publicHook: "Fast helps. Shape wins.",
+    };
+  }
+  return null;
+}
+
+function uniqueSignals(signals) {
+  const seen = new Set();
+  const unique = [];
+  for (const signal of signals) {
+    if (!signal?.key || seen.has(signal.key)) continue;
+    seen.add(signal.key);
+    unique.push(signal);
+  }
+  return unique;
+}
+
+async function fetchTrendSignals(config, args) {
+  if (args.offline) {
+    return {
+      source: "offline_fallback",
+      signals: FALLBACK_TREND_SIGNALS,
+    };
+  }
+
+  const titles = [];
+  const searches = trendSearchesForCity(config.location.city).map(async (query) => {
+    const url = new URL("https://news.google.com/rss/search");
+    url.searchParams.set("q", `${query} when:30d`);
+    url.searchParams.set("hl", "en-GB");
+    url.searchParams.set("gl", "GB");
+    url.searchParams.set("ceid", "GB:en");
+
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "TriangulateSocialAgent/1.0",
+      },
+    });
+    if (!res.ok) return;
+
+    const xml = await res.text();
+    for (const match of xml.matchAll(/<title>([\s\S]*?)<\/title>/g)) {
+      const title = cleanNewsTitle(match[1]);
+      if (title && title !== "Google News") titles.push(title);
+    }
+  });
+
+  const results = await Promise.allSettled(searches);
+  const hadSuccessfulFetch = results.some((result) => result.status === "fulfilled");
+  const currentSignals = uniqueSignals(titles.map(signalFromTitle).filter(Boolean));
+
+  return {
+    source: hadSuccessfulFetch && currentSignals.length ? "current_news_inspired" : "fallback_no_trend_matches",
+    signals: currentSignals.length ? currentSignals.concat(FALLBACK_TREND_SIGNALS) : FALLBACK_TREND_SIGNALS,
+    titleCount: titles.length,
   };
 }
 
@@ -246,7 +396,245 @@ function eventHashtag(event) {
   return `#Triangulate${name || "Event"}`;
 }
 
-function buildOwnedDrafts(events, config) {
+function eventUrlFor(event, config) {
+  const eventId = String(event.id || "").trim();
+  if (!eventId) return "";
+  if (eventId.startsWith("fallback-")) return "";
+
+  try {
+    const url = new URL(config.brand.eventsUrl);
+    url.searchParams.set("event", eventId);
+    return url.toString();
+  } catch {
+    const separator = config.brand.eventsUrl.includes("?") ? "&" : "?";
+    return `${config.brand.eventsUrl}${separator}event=${encodeURIComponent(eventId)}`;
+  }
+}
+
+function dayKey(isoString) {
+  return new Date(isoString).toISOString().slice(0, 10);
+}
+
+function stableHash(value) {
+  let hash = 0;
+  for (const char of String(value)) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return hash;
+}
+
+function rotateList(items, seed) {
+  if (!items.length) return [];
+  const offset = seed % items.length;
+  return items.slice(offset).concat(items.slice(0, offset));
+}
+
+function geoTargetingFor(config) {
+  return {
+    type: "platform_location_targeting_guidance",
+    rule: "Use local copy only for geo-targeted placements. Use fallback copy for general organic posting.",
+    city: config.location.city,
+    lat: config.location.lat,
+    lng: config.location.lng,
+    radiusKm: config.location.radiusKm,
+    audience: `Instagram/TikTok users whose platform location signals place them in or near ${config.location.city}.`,
+    privacy: "Do not infer, store, or expose any individual user's location.",
+  };
+}
+
+function fallbackCopy(hook, caption, hashtags, notes = []) {
+  return {
+    useWhen: "Use this for organic posts or audiences without platform location targeting.",
+    hook,
+    caption,
+    hashtags,
+    notes,
+  };
+}
+
+function buildGeneralMarketingDrafts(config, trendResult, generatedAt) {
+  const city = config.location.city;
+  const geoTargeting = geoTargetingFor(config);
+  const targetCount = config.cadence.dailyGeneralPostTarget || 5;
+  const signals = uniqueSignals(trendResult.signals || FALLBACK_TREND_SIGNALS);
+  const rotatedSignals = rotateList(signals, stableHash(`${dayKey(generatedAt)}:${city}`));
+  const signalAt = (index) => rotatedSignals[index % rotatedSignals.length] || FALLBACK_TREND_SIGNALS[index % FALLBACK_TREND_SIGNALS.length];
+
+  const drafts = [
+    {
+      status: "needs_approval",
+      safety: "general_marketing_no_source_mentions_no_player_data",
+      trigger: "daily_general_marketing",
+      trendSignalKey: signalAt(0).key,
+      locality: city,
+      geoTargeting,
+      channel: "tiktok",
+      format: "9:16 short video",
+      title: `${city} is playable`,
+      hook: `${city} has more playable space than people think.`,
+      marketingAngle: signalAt(0).angle,
+      script: [
+        `Text: ${city} is not just where the game happens.`,
+        "Text: The streets, parks, and open routes change the strategy.",
+        "VO: Three players. One moving triangle. Real-world decisions.",
+        `VO: Find the next Triangulate session: ${config.brand.eventsUrl}.`,
+      ],
+      caption: `${city} has parks, routes, corners, and sightlines. Triangulate turns them into a team game. ${config.brand.eventsUrl}`,
+      hashtags: ["#PlayTriangulate", `#${city.replace(/\s+/g, "")}Events`, "#OutdoorMultiplayer", "#MobileGameIRL"],
+      fallbackCopy: fallbackCopy(
+        "The best game board might already be outside.",
+        `Parks, routes, corners, and sightlines can become a team game. Triangulate turns real space into play. ${config.brand.eventsUrl}`,
+        ["#PlayTriangulate", "#OutdoorMultiplayer", "#MobileGameIRL"],
+        ["Replace the city-specific opening text with: The real world is playable."]
+      ),
+      assetBrief: `Fast cuts of ${city}-style streets, parks, and map lines. No identifiable faces. Use bold captions and a glowing triangle moving through local space.`,
+    },
+    {
+      status: "needs_approval",
+      safety: "general_marketing_no_source_mentions_no_player_data",
+      trigger: "daily_general_marketing",
+      trendSignalKey: signalAt(1).key,
+      locality: city,
+      geoTargeting,
+      channel: "instagram_reel",
+      format: "9:16 reel",
+      title: "The group chat can leave the chat",
+      hook: "Some games are better when everyone has to actually move.",
+      marketingAngle: signalAt(1).angle,
+      script: [
+        "Text: The group chat can leave the chat.",
+        `Text: Pick a public space in ${city}.`,
+        "Text: Form a triangle. Hold the shape. Outthink nearby teams.",
+        "Text: Triangulate is real-world team play.",
+      ],
+      caption: `A mobile game for people who want the plan, the sprint, and the laugh afterwards. Built for real spaces around ${city}. ${config.brand.eventsUrl}`,
+      hashtags: ["#PlayTriangulate", "#SocialSports", "#OutdoorGames", `#${city.replace(/\s+/g, "")}`],
+      fallbackCopy: fallbackCopy(
+        "Some games are better when everyone has to actually move.",
+        `A mobile game for people who want the plan, the sprint, and the laugh afterwards. Built for real spaces, not just screens. ${config.brand.eventsUrl}`,
+        ["#PlayTriangulate", "#SocialSports", "#OutdoorGames"],
+        ["Replace the city-specific script line with: Pick a public space nearby."]
+      ),
+      assetBrief: `Create a local-feeling reel: phone close-up, shoes on pavement, simple triangle graphic over a ${city} park/square scene. No real player identities.`,
+    },
+    {
+      status: "needs_approval",
+      safety: "general_marketing_no_source_mentions_no_player_data",
+      trigger: "daily_general_marketing",
+      trendSignalKey: signalAt(2).key,
+      locality: city,
+      geoTargeting,
+      channel: "instagram_carousel",
+      format: "5-slide carousel",
+      title: `Why ${city} works as a game board`,
+      marketingAngle: signalAt(2).angle,
+      slides: [
+        `${city} already has the map.`,
+        "Parks create open lanes.",
+        "Corners create decisions.",
+        "Distance creates team pressure.",
+        `Triangulate turns all of it into play: ${config.brand.eventsUrl}`,
+      ],
+      caption: `The best game board might already be outside. Triangulate is built around real routes, real spacing, and team decisions in ${city}.`,
+      hashtags: ["#PlayTriangulate", "#RealWorldGaming", "#TriangleTactics", `#${city.replace(/\s+/g, "")}Life`],
+      fallbackCopy: fallbackCopy(
+        "Why real spaces work as a game board",
+        "The best game board might already be outside. Triangulate is built around real routes, real spacing, and team decisions.",
+        ["#PlayTriangulate", "#RealWorldGaming", "#TriangleTactics"],
+        ["Replace the first carousel slide with: The real world already has the map."]
+      ),
+      assetBrief: `Bold diagram carousel using abstract ${city} map shapes, triangle overlays, arrows, and short tactical captions.`,
+    },
+    {
+      status: "needs_approval",
+      safety: "general_marketing_no_source_mentions_no_player_data",
+      trigger: "daily_general_marketing",
+      trendSignalKey: signalAt(3).key,
+      locality: city,
+      geoTargeting,
+      channel: "tiktok",
+      format: "9:16 short video",
+      title: "Fast helps. Shape wins.",
+      hook: "In Triangulate, speed is useful. Positioning is everything.",
+      marketingAngle: signalAt(3).angle,
+      script: [
+        "Scene: Three dots spread across a local map.",
+        "Text: Fast helps.",
+        "Scene: Triangle expands and pivots.",
+        "Text: Shape wins.",
+        `Text: Try it around ${city}.`,
+      ],
+      caption: `This is not just running around with a phone. It is spacing, timing, and team shape. ${config.brand.eventsUrl}`,
+      hashtags: ["#PlayTriangulate", "#TriangleTactics", "#RunClaimSurvive", "#TeamStrategy"],
+      fallbackCopy: fallbackCopy(
+        "In Triangulate, speed is useful. Positioning is everything.",
+        `This is not just running around with a phone. It is spacing, timing, and team shape. ${config.brand.eventsUrl}`,
+        ["#PlayTriangulate", "#TriangleTactics", "#RunClaimSurvive", "#TeamStrategy"],
+        ["Replace the final text card with: Try it outside."]
+      ),
+      assetBrief: `Make a punchy tactical explainer with animated dots, a triangle outline, and local map texture inspired by ${city}.`,
+    },
+    {
+      status: "needs_approval",
+      safety: "general_marketing_no_source_mentions_no_player_data",
+      trigger: "daily_general_marketing",
+      trendSignalKey: signalAt(4).key,
+      locality: city,
+      geoTargeting,
+      channel: "instagram_story",
+      format: "4 story frames",
+      title: `${city} weekend prompt`,
+      marketingAngle: signalAt(4).angle,
+      frames: [
+        `This weekend in ${city}: try a game that uses the actual map.`,
+        "Bring two people.",
+        "Form one triangle.",
+        `Find or start a session: ${config.brand.eventsUrl}`,
+      ],
+      hashtags: ["#PlayTriangulate", "#OutdoorMultiplayer", `#${city.replace(/\s+/g, "")}Events`],
+      fallbackCopy: fallbackCopy(
+        "This weekend: try a game that uses the actual map.",
+        `Bring two people. Form one triangle. Find or start a session: ${config.brand.eventsUrl}`,
+        ["#PlayTriangulate", "#OutdoorMultiplayer", "#MobileGameIRL"],
+        ["Replace the first story frame with: This weekend: try a game that uses the actual map."]
+      ),
+      assetBrief: `Four story frames with local weekend energy, triangle route lines, and simple call-to-action copy. No news/source references.`,
+    },
+    {
+      status: "needs_approval",
+      safety: "general_marketing_no_source_mentions_no_player_data",
+      trigger: "daily_general_marketing",
+      trendSignalKey: signalAt(5).key,
+      locality: city,
+      geoTargeting,
+      channel: "instagram_reel",
+      format: "9:16 reel",
+      title: "A mobile game with fresh air",
+      hook: "Same phone. Different kind of session.",
+      marketingAngle: signalAt(5).angle,
+      script: [
+        "Text: Mobile game?",
+        "Text: Yes.",
+        "Text: Sitting still?",
+        "Text: Not this one.",
+        `Text: Triangulate is built for real spaces around ${city}.`,
+      ],
+      caption: `A phone game that gives the group a reason to meet outside. ${config.brand.eventsUrl}`,
+      hashtags: ["#PlayTriangulate", "#MobileGameIRL", "#OutdoorGames", "#SocialGaming"],
+      fallbackCopy: fallbackCopy(
+        "Same phone. Different kind of session.",
+        `A phone game that gives the group a reason to meet outside. ${config.brand.eventsUrl}`,
+        ["#PlayTriangulate", "#MobileGameIRL", "#OutdoorGames", "#SocialGaming"],
+        ["Replace the final script line with: Triangulate is built for real spaces."]
+      ),
+      assetBrief: `Use upbeat outdoor footage style, map UI fragments, and a clean triangle motif. Keep it local to ${city} without showing identifiable people.`,
+    },
+  ];
+
+  return rotateList(drafts, stableHash(`${city}:${dayKey(generatedAt)}:general`)).slice(0, targetCount);
+}
+
+function buildOwnedDrafts(events, config, trendResult, generatedAt) {
   const city = config.location.city;
   const eventDrafts = events.slice(0, 6).flatMap((event) => {
     const venue = placeLabel(event);
@@ -255,6 +643,10 @@ function buildOwnedDrafts(events, config) {
     const angle = eventAngle(event, city);
     const uniqueTag = eventHashtag(event);
     const baseTags = ["#PlayTriangulate", "#TriangulateLive", "#RunClaimSurvive", uniqueTag];
+    const eventUrl = eventUrlFor(event, config);
+    const actionUrl = eventUrl || config.brand.eventsUrl;
+    const eventCta = eventUrl ? `Open this event: ${actionUrl}` : `Find it on ${actionUrl}`;
+    const reelCta = eventUrl ? "Open the linked event on Triangulate." : "Join the event on Triangulate.";
 
     return [
       {
@@ -262,6 +654,7 @@ function buildOwnedDrafts(events, config) {
         safety: "event_level_only_no_player_mentions",
         trigger,
         sourceEventId: event.id,
+        ...(eventUrl ? { eventUrl } : {}),
         channel: "tiktok",
         format: "9:16 short video",
         title: `${event.title}: ${venue}`,
@@ -270,9 +663,9 @@ function buildOwnedDrafts(events, config) {
           `Show a map-style triangle over ${venue}.`,
           `VO: ${event.title} lands ${when}.`,
           "VO: Three points, one moving shape, and a match that only works outdoors.",
-          `VO: Find it on ${config.brand.eventsUrl}.`,
+          `VO: ${eventCta}.`,
         ],
-        caption: `${event.title} at ${venue}. Three points. One triangle. Real-world play.`,
+        caption: `${event.title} at ${venue}. Three points. One triangle. Real-world play. ${actionUrl}`,
         hashtags: baseTags,
         assetBrief: `Create a 9:16 animated triangle-map visual for ${venue}. No real player faces. Use cyan/gold triangle lines and bold captions.`,
       },
@@ -281,6 +674,7 @@ function buildOwnedDrafts(events, config) {
         safety: "event_level_only_no_player_mentions",
         trigger,
         sourceEventId: event.id,
+        ...(eventUrl ? { eventUrl } : {}),
         channel: "instagram_reel",
         format: "9:16 reel",
         title: `${event.title} reel`,
@@ -289,9 +683,9 @@ function buildOwnedDrafts(events, config) {
           `Text: ${event.title}`,
           `Text: ${venue} · ${when}`,
           `Text: ${angle}`,
-          "Text: Join the event on Triangulate.",
+          `Text: ${reelCta}`,
         ],
-        caption: `${event.title} at ${venue}. ${angle} ${config.brand.eventsUrl}`,
+        caption: `${event.title} at ${venue}. ${angle} ${actionUrl}`,
         hashtags: baseTags.concat([`#${city.replace(/\s+/g, "")}Events`]),
         assetBrief: `Use the website's outdoor multiplayer style: real city/park energy, glowing triangle motif, no identifiable players.`,
       },
@@ -300,6 +694,7 @@ function buildOwnedDrafts(events, config) {
         safety: "event_level_only_no_player_mentions",
         trigger,
         sourceEventId: event.id,
+        ...(eventUrl ? { eventUrl } : {}),
         channel: "instagram_story",
         format: "4 story frames",
         title: `${event.title} story reminder`,
@@ -307,7 +702,7 @@ function buildOwnedDrafts(events, config) {
           `Today/soon: ${event.title}`,
           `Venue: ${venue}`,
           "How it works: three points form one live triangle.",
-          `Open the events page: ${config.brand.eventsUrl}`,
+          eventCta,
         ],
         hashtags: ["#PlayTriangulate", uniqueTag],
         assetBrief: "Create four simple story frames with countdown energy and no player names.",
@@ -355,13 +750,21 @@ function buildOwnedDrafts(events, config) {
     },
   ];
 
-  return eventDrafts.concat(evergreenDrafts).slice(0, Math.max(4, config.cadence.dailyOwnedPostTarget * 2));
+  const eventTarget = Math.max(0, config.cadence.dailyOwnedPostTarget || 4);
+  const generalDrafts = buildGeneralMarketingDrafts(config, trendResult, generatedAt);
+  return eventDrafts.slice(0, eventTarget).concat(generalDrafts, evergreenDrafts);
 }
 
 function buildLeadSuggestions(events, config) {
   const city = config.location.city;
-  const eventNames = events.map((event) => event.title).filter(Boolean);
-  const venues = events.map(placeLabel).filter(Boolean);
+  const eventSummaries = events
+    .map((event) => ({
+      name: event.title,
+      url: eventUrlFor(event, config),
+      fallbackUrl: config.brand.eventsUrl,
+      venue: placeLabel(event),
+    }))
+    .filter((event) => event.name);
   const leadTargets = config.leadTargets || [];
   const targetCount = config.cadence.leadSuggestionTarget || 12;
 
@@ -384,31 +787,31 @@ function buildLeadSuggestions(events, config) {
     },
   ]);
 
-  const eventSuggestions = eventNames.slice(0, 4).map((name) => ({
+  const eventSuggestions = eventSummaries.slice(0, 4).map((event) => ({
     status: "needs_manual_review",
     actionAllowed: "comment_suggestion_only",
     platform: "instagram",
     searchQuery: `${city} events this week outdoor games`,
-    reason: `Use ${name} as the relevant Triangulate event hook if the post is about local activities.`,
-    suggestedComment: `${name} is a Triangulate event built around three-player movement and real-world strategy. Details are on ${config.brand.eventsUrl}.`,
+    reason: `Use ${event.name} as the relevant Triangulate event hook if the post is about local activities.`,
+    suggestedComment: `${event.name} is a Triangulate event built around three-player movement and real-world strategy. Details are here: ${event.url || event.fallbackUrl}.`,
   }));
 
-  const venueSuggestions = venues.slice(0, 4).map((venue) => ({
+  const venueSuggestions = eventSummaries.slice(0, 4).map((event) => ({
     status: "needs_manual_review",
     actionAllowed: "comment_suggestion_only",
     platform: "instagram",
-    searchQuery: `${venue} events`,
+    searchQuery: `${event.venue} events`,
     reason: `Find posts about the venue and only comment if Triangulate is genuinely relevant.`,
-    suggestedComment: `${venue} has strong triangle-game energy: open lanes, good sightlines, and room to reset. Triangulate events are at ${config.brand.eventsUrl}.`,
+    suggestedComment: `${event.venue} has strong triangle-game energy: open lanes, good sightlines, and room to reset. This event is here: ${event.url || event.fallbackUrl}.`,
   }));
 
   return baseSuggestions.concat(eventSuggestions, venueSuggestions).slice(0, targetCount);
 }
 
-function buildRun(config, eventsResult) {
+function buildRun(config, eventsResult, trendResult) {
   const events = eventsResult.events;
   const generatedAt = new Date().toISOString();
-  const ownedDrafts = buildOwnedDrafts(events, config);
+  const ownedDrafts = buildOwnedDrafts(events, config, trendResult, generatedAt);
   const leadSuggestions = buildLeadSuggestions(events, config);
 
   return {
@@ -428,6 +831,12 @@ function buildRun(config, eventsResult) {
       source: eventsResult.source,
       warning: eventsResult.warning || null,
       eventCount: events.length,
+    },
+    trendSource: {
+      source: trendResult.source,
+      signalCount: uniqueSignals(trendResult.signals || []).length,
+      titleCount: trendResult.titleCount || 0,
+      note: "Trend signals inspire general marketing angles only. Public copy must not mention news sources.",
     },
     ownedDrafts,
     leadSuggestions,
@@ -449,6 +858,7 @@ function markdownForRun(run) {
     "- Human approval required before any public action",
     "",
     `Event source: ${run.eventSource.source} (${run.eventSource.eventCount} events)`,
+    `Trend source: ${run.trendSource.source} (${run.trendSource.signalCount} signals)`,
     "",
     "## Owned Content Drafts",
     "",
@@ -459,9 +869,26 @@ function markdownForRun(run) {
     lines.push("");
     lines.push(`- Status: ${draft.status}`);
     lines.push(`- Trigger: ${draft.trigger}`);
+    if (draft.sourceEventId) lines.push(`- Source event: ${draft.sourceEventId}`);
+    if (draft.eventUrl) lines.push(`- Event link: ${draft.eventUrl}`);
+    if (draft.locality) lines.push(`- Locality: ${draft.locality}`);
+    if (draft.geoTargeting) {
+      lines.push(
+        `- Geo targeting: ${draft.geoTargeting.city}, ${draft.geoTargeting.radiusKm}km radius. ${draft.geoTargeting.rule}`
+      );
+    }
+    if (draft.marketingAngle) lines.push(`- Marketing angle: ${draft.marketingAngle}`);
     lines.push(`- Hook: ${draft.hook || "n/a"}`);
     lines.push(`- Caption: ${draft.caption || "n/a"}`);
     lines.push(`- Hashtags: ${(draft.hashtags || []).join(" ")}`);
+    if (draft.fallbackCopy) {
+      lines.push(`- General fallback hook: ${draft.fallbackCopy.hook}`);
+      lines.push(`- General fallback caption: ${draft.fallbackCopy.caption}`);
+      lines.push(`- General fallback hashtags: ${(draft.fallbackCopy.hashtags || []).join(" ")}`);
+      if (draft.fallbackCopy.notes?.length) {
+        lines.push(`- General fallback notes: ${draft.fallbackCopy.notes.join(" ")}`);
+      }
+    }
     lines.push(`- Asset brief: ${draft.assetBrief || "n/a"}`);
     if (draft.script) {
       lines.push("- Script:");
@@ -512,13 +939,17 @@ async function main() {
 
   const rawConfig = readJson(args.config);
   const config = normaliseConfig(rawConfig, args);
-  const eventsResult = await fetchEvents(config, args);
-  const run = buildRun(config, eventsResult);
+  const [eventsResult, trendResult] = await Promise.all([
+    fetchEvents(config, args),
+    fetchTrendSignals(config, args),
+  ]);
+  const run = buildRun(config, eventsResult, trendResult);
   const paths = writeRun(run, args.outDir, args.dryRun);
 
   console.log("Triangulate social agent complete");
   console.log(`Mode: ${run.mode}`);
   console.log(`Event source: ${run.eventSource.source}`);
+  console.log(`Trend source: ${run.trendSource.source}`);
   console.log(`Owned drafts: ${run.ownedDrafts.length}`);
   console.log(`Lead/comment suggestions: ${run.leadSuggestions.length}`);
   console.log("Auto-posting: off");

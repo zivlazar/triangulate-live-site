@@ -1,0 +1,516 @@
+{
+  "publishedAt": "2026-04-23T13:42:50.547Z",
+  "sourceQueueFile": "social-agent/out/social-queue-2026-04-23T13-32-25-457Z.json",
+  "adminEmail": "triangulate.game@gmail.com",
+  "queue": {
+    "generatedAt": "2026-04-23T13:32:25.457Z",
+    "mode": "phase_1_manual_approval",
+    "accounts": {
+      "instagram": "@triangulate.live",
+      "tiktok": "@triangulate.live"
+    },
+    "safety": {
+      "autoPosting": false,
+      "autoComments": false,
+      "autoLikes": false,
+      "note": "This run creates drafts and suggestions only. A human must approve and post manually."
+    },
+    "eventSource": {
+      "source": "offline_no_live_events",
+      "warning": null,
+      "eventCount": 2
+    },
+    "trendSource": {
+      "source": "current_news_inspired",
+      "signalCount": 6,
+      "titleCount": 277,
+      "note": "Trend signals inspire general marketing angles only. Public copy must not mention news sources."
+    },
+    "ownedDrafts": [
+      {
+        "status": "needs_approval",
+        "safety": "event_level_only_no_player_mentions",
+        "trigger": "t_minus_72h",
+        "sourceEventId": "fallback-after-school-rush",
+        "channel": "tiktok",
+        "format": "9:16 short video",
+        "title": "After School Rush: Victoria Park",
+        "hook": "Victoria Park is not just a place today. It is a Triangulate field.",
+        "script": [
+          "Show a map-style triangle over Victoria Park.",
+          "VO: After School Rush lands Sat 25 Apr, 17:30.",
+          "VO: Three points, one moving shape, and a match that only works outdoors.",
+          "VO: Find it on https://triangulate.live/events.html."
+        ],
+        "caption": "After School Rush at Victoria Park. Three points. One triangle. Real-world play. https://triangulate.live/events.html",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#TriangulateLive",
+          "#RunClaimSurvive",
+          "#TriangulateAfterSchoolRush"
+        ],
+        "assetBrief": "Create a 9:16 animated triangle-map visual for Victoria Park. No real player faces. Use cyan/gold triangle lines and bold captions."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "event_level_only_no_player_mentions",
+        "trigger": "t_minus_72h",
+        "sourceEventId": "fallback-after-school-rush",
+        "channel": "instagram_reel",
+        "format": "9:16 reel",
+        "title": "After School Rush reel",
+        "hook": "A real-world strategy game is coming to Victoria Park.",
+        "script": [
+          "Text: After School Rush",
+          "Text: Victoria Park · Sat 25 Apr, 17:30",
+          "Text: Fast turnout, open ground, and plenty of room to make big plays before dark.",
+          "Text: Join the event on Triangulate."
+        ],
+        "caption": "After School Rush at Victoria Park. Fast turnout, open ground, and plenty of room to make big plays before dark. https://triangulate.live/events.html",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#TriangulateLive",
+          "#RunClaimSurvive",
+          "#TriangulateAfterSchoolRush",
+          "#LondonEvents"
+        ],
+        "assetBrief": "Use the website's outdoor multiplayer style: real city/park energy, glowing triangle motif, no identifiable players."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "event_level_only_no_player_mentions",
+        "trigger": "t_minus_72h",
+        "sourceEventId": "fallback-after-school-rush",
+        "channel": "instagram_story",
+        "format": "4 story frames",
+        "title": "After School Rush story reminder",
+        "frames": [
+          "Today/soon: After School Rush",
+          "Venue: Victoria Park",
+          "How it works: three points form one live triangle.",
+          "Find it on https://triangulate.live/events.html"
+        ],
+        "hashtags": [
+          "#PlayTriangulate",
+          "#TriangulateAfterSchoolRush"
+        ],
+        "assetBrief": "Create four simple story frames with countdown energy and no player names."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "event_level_only_no_player_mentions",
+        "trigger": "event_announcement",
+        "sourceEventId": "fallback-golden-hour-match",
+        "channel": "tiktok",
+        "format": "9:16 short video",
+        "title": "Golden Hour Match: Battersea Park",
+        "hook": "Battersea Park is not just a place today. It is a Triangulate field.",
+        "script": [
+          "Show a map-style triangle over Battersea Park.",
+          "VO: Golden Hour Match lands Mon 27 Apr, 17:45.",
+          "VO: Three points, one moving shape, and a match that only works outdoors.",
+          "VO: Find it on https://triangulate.live/events.html."
+        ],
+        "caption": "Golden Hour Match at Battersea Park. Three points. One triangle. Real-world play. https://triangulate.live/events.html",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#TriangulateLive",
+          "#RunClaimSurvive",
+          "#TriangulateGoldenHourMatch"
+        ],
+        "assetBrief": "Create a 9:16 animated triangle-map visual for Battersea Park. No real player faces. Use cyan/gold triangle lines and bold captions."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "general_marketing_no_source_mentions_no_player_data",
+        "trigger": "daily_general_marketing",
+        "trendSignalKey": "co_op_presence",
+        "locality": "London",
+        "geoTargeting": {
+          "type": "platform_location_targeting_guidance",
+          "rule": "Use local copy only for geo-targeted placements. Use fallback copy for general organic posting.",
+          "city": "London",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "radiusKm": 50,
+          "audience": "Instagram/TikTok users whose platform location signals place them in or near London.",
+          "privacy": "Do not infer, store, or expose any individual user's location."
+        },
+        "channel": "tiktok",
+        "format": "9:16 short video",
+        "title": "Fast helps. Shape wins.",
+        "hook": "In Triangulate, speed is useful. Positioning is everything.",
+        "marketingAngle": "Co-op and multiplayer games are leaning into shared presence and team moments.",
+        "script": [
+          "Scene: Three dots spread across a local map.",
+          "Text: Fast helps.",
+          "Scene: Triangle expands and pivots.",
+          "Text: Shape wins.",
+          "Text: Try it around London."
+        ],
+        "caption": "This is not just running around with a phone. It is spacing, timing, and team shape. https://triangulate.live/events.html",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#TriangleTactics",
+          "#RunClaimSurvive",
+          "#TeamStrategy"
+        ],
+        "fallbackCopy": {
+          "useWhen": "Use this for organic posts or audiences without platform location targeting.",
+          "hook": "In Triangulate, speed is useful. Positioning is everything.",
+          "caption": "This is not just running around with a phone. It is spacing, timing, and team shape. https://triangulate.live/events.html",
+          "hashtags": [
+            "#PlayTriangulate",
+            "#TriangleTactics",
+            "#RunClaimSurvive",
+            "#TeamStrategy"
+          ],
+          "notes": [
+            "Replace the final text card with: Try it outside."
+          ]
+        },
+        "assetBrief": "Make a punchy tactical explainer with animated dots, a triangle outline, and local map texture inspired by London."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "general_marketing_no_source_mentions_no_player_data",
+        "trigger": "daily_general_marketing",
+        "trendSignalKey": "fast_mobile_sessions",
+        "locality": "London",
+        "geoTargeting": {
+          "type": "platform_location_targeting_guidance",
+          "rule": "Use local copy only for geo-targeted placements. Use fallback copy for general organic posting.",
+          "city": "London",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "radiusKm": 50,
+          "audience": "Instagram/TikTok users whose platform location signals place them in or near London.",
+          "privacy": "Do not infer, store, or expose any individual user's location."
+        },
+        "channel": "instagram_story",
+        "format": "4 story frames",
+        "title": "London weekend prompt",
+        "marketingAngle": "Mobile game launches and tests are rewarding ideas that are quick to understand.",
+        "frames": [
+          "This weekend in London: try a game that uses the actual map.",
+          "Bring two people.",
+          "Form one triangle.",
+          "Find or start a session: https://triangulate.live/events.html"
+        ],
+        "hashtags": [
+          "#PlayTriangulate",
+          "#OutdoorMultiplayer",
+          "#LondonEvents"
+        ],
+        "fallbackCopy": {
+          "useWhen": "Use this for organic posts or audiences without platform location targeting.",
+          "hook": "This weekend: try a game that uses the actual map.",
+          "caption": "Bring two people. Form one triangle. Find or start a session: https://triangulate.live/events.html",
+          "hashtags": [
+            "#PlayTriangulate",
+            "#OutdoorMultiplayer",
+            "#MobileGameIRL"
+          ],
+          "notes": [
+            "Replace the first story frame with: This weekend: try a game that uses the actual map."
+          ]
+        },
+        "assetBrief": "Four story frames with local weekend energy, triangle route lines, and simple call-to-action copy. No news/source references."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "general_marketing_no_source_mentions_no_player_data",
+        "trigger": "daily_general_marketing",
+        "trendSignalKey": "team_strategy",
+        "locality": "London",
+        "geoTargeting": {
+          "type": "platform_location_targeting_guidance",
+          "rule": "Use local copy only for geo-targeted placements. Use fallback copy for general organic posting.",
+          "city": "London",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "radiusKm": 50,
+          "audience": "Instagram/TikTok users whose platform location signals place them in or near London.",
+          "privacy": "Do not infer, store, or expose any individual user's location."
+        },
+        "channel": "instagram_reel",
+        "format": "9:16 reel",
+        "title": "A mobile game with fresh air",
+        "hook": "Same phone. Different kind of session.",
+        "marketingAngle": "Strategy games are more memorable when space, timing, and pressure all matter.",
+        "script": [
+          "Text: Mobile game?",
+          "Text: Yes.",
+          "Text: Sitting still?",
+          "Text: Not this one.",
+          "Text: Triangulate is built for real spaces around London."
+        ],
+        "caption": "A phone game that gives the group a reason to meet outside. https://triangulate.live/events.html",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#MobileGameIRL",
+          "#OutdoorGames",
+          "#SocialGaming"
+        ],
+        "fallbackCopy": {
+          "useWhen": "Use this for organic posts or audiences without platform location targeting.",
+          "hook": "Same phone. Different kind of session.",
+          "caption": "A phone game that gives the group a reason to meet outside. https://triangulate.live/events.html",
+          "hashtags": [
+            "#PlayTriangulate",
+            "#MobileGameIRL",
+            "#OutdoorGames",
+            "#SocialGaming"
+          ],
+          "notes": [
+            "Replace the final script line with: Triangulate is built for real spaces."
+          ]
+        },
+        "assetBrief": "Use upbeat outdoor footage style, map UI fragments, and a clean triangle motif. Keep it local to London without showing identifiable people."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "general_marketing_no_source_mentions_no_player_data",
+        "trigger": "daily_general_marketing",
+        "trendSignalKey": "outdoor_social",
+        "locality": "London",
+        "geoTargeting": {
+          "type": "platform_location_targeting_guidance",
+          "rule": "Use local copy only for geo-targeted placements. Use fallback copy for general organic posting.",
+          "city": "London",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "radiusKm": 50,
+          "audience": "Instagram/TikTok users whose platform location signals place them in or near London.",
+          "privacy": "Do not infer, store, or expose any individual user's location."
+        },
+        "channel": "tiktok",
+        "format": "9:16 short video",
+        "title": "London is playable",
+        "hook": "London has more playable space than people think.",
+        "marketingAngle": "Outdoor play is becoming a better answer to screen-only social games.",
+        "script": [
+          "Text: London is not just where the game happens.",
+          "Text: The streets, parks, and open routes change the strategy.",
+          "VO: Three players. One moving triangle. Real-world decisions.",
+          "VO: Find the next Triangulate session: https://triangulate.live/events.html."
+        ],
+        "caption": "London has parks, routes, corners, and sightlines. Triangulate turns them into a team game. https://triangulate.live/events.html",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#LondonEvents",
+          "#OutdoorMultiplayer",
+          "#MobileGameIRL"
+        ],
+        "fallbackCopy": {
+          "useWhen": "Use this for organic posts or audiences without platform location targeting.",
+          "hook": "The best game board might already be outside.",
+          "caption": "Parks, routes, corners, and sightlines can become a team game. Triangulate turns real space into play. https://triangulate.live/events.html",
+          "hashtags": [
+            "#PlayTriangulate",
+            "#OutdoorMultiplayer",
+            "#MobileGameIRL"
+          ],
+          "notes": [
+            "Replace the city-specific opening text with: The real world is playable."
+          ]
+        },
+        "assetBrief": "Fast cuts of London-style streets, parks, and map lines. No identifiable faces. Use bold captions and a glowing triangle moving through local space."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "general_marketing_no_source_mentions_no_player_data",
+        "trigger": "daily_general_marketing",
+        "trendSignalKey": "map_as_game_board",
+        "locality": "London",
+        "geoTargeting": {
+          "type": "platform_location_targeting_guidance",
+          "rule": "Use local copy only for geo-targeted placements. Use fallback copy for general organic posting.",
+          "city": "London",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "radiusKm": 50,
+          "audience": "Instagram/TikTok users whose platform location signals place them in or near London.",
+          "privacy": "Do not infer, store, or expose any individual user's location."
+        },
+        "channel": "instagram_reel",
+        "format": "9:16 reel",
+        "title": "The group chat can leave the chat",
+        "hook": "Some games are better when everyone has to actually move.",
+        "marketingAngle": "Current game talk keeps circling back to maps, places, and real-world context.",
+        "script": [
+          "Text: The group chat can leave the chat.",
+          "Text: Pick a public space in London.",
+          "Text: Form a triangle. Hold the shape. Outthink nearby teams.",
+          "Text: Triangulate is real-world team play."
+        ],
+        "caption": "A mobile game for people who want the plan, the sprint, and the laugh afterwards. Built for real spaces around London. https://triangulate.live/events.html",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#SocialSports",
+          "#OutdoorGames",
+          "#London"
+        ],
+        "fallbackCopy": {
+          "useWhen": "Use this for organic posts or audiences without platform location targeting.",
+          "hook": "Some games are better when everyone has to actually move.",
+          "caption": "A mobile game for people who want the plan, the sprint, and the laugh afterwards. Built for real spaces, not just screens. https://triangulate.live/events.html",
+          "hashtags": [
+            "#PlayTriangulate",
+            "#SocialSports",
+            "#OutdoorGames"
+          ],
+          "notes": [
+            "Replace the city-specific script line with: Pick a public space nearby."
+          ]
+        },
+        "assetBrief": "Create a local-feeling reel: phone close-up, shoes on pavement, simple triangle graphic over a London park/square scene. No real player identities."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "owned_content_no_player_data",
+        "trigger": "evergreen_explainer",
+        "channel": "tiktok",
+        "format": "9:16 short video",
+        "title": "What is Triangulate?",
+        "hook": "This is a mobile game, but the map is real.",
+        "script": [
+          "Scene 1: Three points appear over a park.",
+          "VO: Three people form one triangle.",
+          "Scene 2: The triangle stretches across paths.",
+          "VO: You move together, hold the shape, and outplay nearby teams.",
+          "Scene 3: Events page at https://triangulate.live/events.html."
+        ],
+        "caption": "Three points. One triangle. Real-world play.",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#OutdoorMultiplayer",
+          "#RunClaimSurvive",
+          "#MobileGameIRL"
+        ],
+        "assetBrief": "Fast rule explainer with animated triangle lines and map-style captions."
+      },
+      {
+        "status": "needs_approval",
+        "safety": "owned_content_no_player_data",
+        "trigger": "evergreen_tactic",
+        "channel": "instagram_carousel",
+        "format": "5-slide carousel",
+        "title": "How the triangle works",
+        "slides": [
+          "Three points. One triangle.",
+          "Join an event or start one nearby.",
+          "Spread out with your team.",
+          "Bigger, smarter triangles beat smaller ones.",
+          "Find the next event: https://triangulate.live/events.html"
+        ],
+        "caption": "Easy to explain. Hard to play well.",
+        "hashtags": [
+          "#PlayTriangulate",
+          "#TriangleTactics",
+          "#OutdoorGames",
+          "#RealWorldGaming"
+        ],
+        "assetBrief": "Bold carousel with simple diagrams and large captions."
+      }
+    ],
+    "leadSuggestions": [
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "instagram",
+        "searchQuery": "London local gaming events",
+        "reason": "Find local gaming events accounts/events that overlap with outdoor social play.",
+        "suggestedComment": "This looks like the kind of group that would understand Triangulate: three points, one team shape, real movement. Events are listed at https://triangulate.live/events.html."
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "tiktok",
+        "searchQuery": "London local gaming events outdoor game",
+        "reason": "Find short-form content where a Triangulate event reference would be genuinely relevant.",
+        "suggestedComment": "This has real Triangulate energy: open space, quick decisions, and a game that only works outdoors. https://triangulate.live/events.html"
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "instagram",
+        "searchQuery": "London social sports",
+        "reason": "Find social sports accounts/events that overlap with outdoor social play.",
+        "suggestedComment": "This looks like the kind of group that would understand Triangulate: three points, one team shape, real movement. Events are listed at https://triangulate.live/events.html."
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "tiktok",
+        "searchQuery": "London social sports outdoor game",
+        "reason": "Find short-form content where a Triangulate event reference would be genuinely relevant.",
+        "suggestedComment": "This has real Triangulate energy: open space, quick decisions, and a game that only works outdoors. https://triangulate.live/events.html"
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "instagram",
+        "searchQuery": "London running clubs",
+        "reason": "Find running clubs accounts/events that overlap with outdoor social play.",
+        "suggestedComment": "This looks like the kind of group that would understand Triangulate: three points, one team shape, real movement. Events are listed at https://triangulate.live/events.html."
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "tiktok",
+        "searchQuery": "London running clubs outdoor game",
+        "reason": "Find short-form content where a Triangulate event reference would be genuinely relevant.",
+        "suggestedComment": "This has real Triangulate energy: open space, quick decisions, and a game that only works outdoors. https://triangulate.live/events.html"
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "instagram",
+        "searchQuery": "London student events",
+        "reason": "Find student events accounts/events that overlap with outdoor social play.",
+        "suggestedComment": "This looks like the kind of group that would understand Triangulate: three points, one team shape, real movement. Events are listed at https://triangulate.live/events.html."
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "tiktok",
+        "searchQuery": "London student events outdoor game",
+        "reason": "Find short-form content where a Triangulate event reference would be genuinely relevant.",
+        "suggestedComment": "This has real Triangulate energy: open space, quick decisions, and a game that only works outdoors. https://triangulate.live/events.html"
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "instagram",
+        "searchQuery": "London outdoor fitness",
+        "reason": "Find outdoor fitness accounts/events that overlap with outdoor social play.",
+        "suggestedComment": "This looks like the kind of group that would understand Triangulate: three points, one team shape, real movement. Events are listed at https://triangulate.live/events.html."
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "tiktok",
+        "searchQuery": "London outdoor fitness outdoor game",
+        "reason": "Find short-form content where a Triangulate event reference would be genuinely relevant.",
+        "suggestedComment": "This has real Triangulate energy: open space, quick decisions, and a game that only works outdoors. https://triangulate.live/events.html"
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "instagram",
+        "searchQuery": "London company away days",
+        "reason": "Find company away days accounts/events that overlap with outdoor social play.",
+        "suggestedComment": "This looks like the kind of group that would understand Triangulate: three points, one team shape, real movement. Events are listed at https://triangulate.live/events.html."
+      },
+      {
+        "status": "needs_manual_review",
+        "actionAllowed": "research_only",
+        "platform": "tiktok",
+        "searchQuery": "London company away days outdoor game",
+        "reason": "Find short-form content where a Triangulate event reference would be genuinely relevant.",
+        "suggestedComment": "This has real Triangulate energy: open space, quick decisions, and a game that only works outdoors. https://triangulate.live/events.html"
+      }
+    ]
+  }
+}

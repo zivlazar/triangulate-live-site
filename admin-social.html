@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triangulate Admin | Social approval</title>
+    <meta name="description" content="Admin dashboard for reviewing Triangulate social content drafts." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1d7ce4" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="./assets/app/favicon.png" />
+    <link rel="stylesheet" href="./styles/site.css?v=202604231450" />
+  </head>
+  <body data-page="admin-social">
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container nav-shell">
+          <a class="brand" href="./index.html" aria-label="Triangulate home">
+            <img src="./assets/brand-mark.svg" alt="" width="34" height="34" />
+            <span>Triangulate</span>
+          </a>
+          <nav class="site-nav" aria-label="Primary">
+            <a href="./index.html">Home</a>
+            <a href="./events.html">Events</a>
+            <a href="./teams.html">Teams</a>
+            <a href="./leaderboard.html">Leaderboard</a>
+            <a href="./contact.html">Contact</a>
+          </nav>
+          <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+            <span class="nav-toggle__icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-hero admin-hero">
+          <div class="container page-hero__grid">
+            <div class="section-heading section-heading--left">
+              <p class="eyebrow">Admin approval</p>
+              <h1 class="page-title">Social Queue</h1>
+              <p>
+                Review TikTok and Instagram drafts before anything is posted. Local copy is only for
+                geo-targeted platform placements; each draft includes general fallback copy for normal posting.
+              </p>
+            </div>
+            <div class="page-hero__card admin-status-card" id="admin-status-card">
+              <p class="panel-label">Access</p>
+              <h3>Admin login required</h3>
+              <p id="admin-status-copy">Sign in with the approved admin email to review the queue.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <div class="container">
+            <section class="admin-login-panel" id="admin-login-panel">
+              <div>
+                <p class="panel-label">Approved admin</p>
+                <h2>Sign in to approve posts</h2>
+                <p>
+                  The dashboard accepts Supabase email magic links for
+                  <strong>triangulate.game@gmail.com</strong>.
+                </p>
+              </div>
+              <form class="admin-login-form" id="admin-login-form">
+                <label class="contact-field">
+                  <span>Email</span>
+                  <input id="admin-email" type="email" value="triangulate.game@gmail.com" autocomplete="email" required />
+                </label>
+                <button class="button button--primary" type="submit">Send login link</button>
+                <p class="admin-inline-status" id="admin-login-status" aria-live="polite"></p>
+              </form>
+            </section>
+
+            <section class="admin-dashboard" id="admin-dashboard" hidden>
+              <div class="admin-dashboard__toolbar">
+                <div>
+                  <p class="panel-label">Approval queue</p>
+                  <h2 id="admin-queue-title">Social drafts</h2>
+                  <p id="admin-queue-meta">Loading queue...</p>
+                </div>
+                <div class="admin-dashboard__actions">
+                  <button class="button button--secondary" type="button" id="admin-export">Export decisions</button>
+                  <button class="button button--primary" type="button" id="admin-publish">Publish approved</button>
+                  <button class="button button--quiet" type="button" id="admin-reset">Clear local decisions</button>
+                  <button class="button button--ghost" type="button" id="admin-sign-out">Sign out</button>
+                </div>
+              </div>
+
+              <div class="admin-summary-grid" id="admin-summary-grid"></div>
+              <div class="admin-filter-row" id="admin-filter-row"></div>
+              <div class="admin-draft-grid" id="admin-draft-grid"></div>
+              <p class="admin-inline-status" id="admin-dashboard-status" aria-live="polite"></p>
+            </section>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-shell">
+          <div>
+            <a class="brand brand--footer" href="./index.html">
+              <img src="./assets/brand-mark.svg" alt="" width="30" height="30" />
+              <span>Triangulate</span>
+            </a>
+            <p class="footer-copy">Outdoor team play built around movement, shape, and smart decisions.</p>
+          </div>
+          <div class="footer-links">
+            <a href="./privacy-policy.html">Privacy policy</a>
+            <a href="./terms-of-service.html">Terms of Service</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="./scripts/admin-social.js?v=202604231450"></script>
+    <script src="./scripts/nav.js?v=1776436676" defer></script>
+  </body>
+</html>
