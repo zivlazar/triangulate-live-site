@@ -199,9 +199,12 @@ a {
 }
 
 .site-nav a:hover,
-.footer-links a:hover,
 .text-link:hover {
   color: inherit;
+}
+
+.footer-links a:hover {
+  color: var(--cyan);
 }
 
 .site-nav a:hover {
