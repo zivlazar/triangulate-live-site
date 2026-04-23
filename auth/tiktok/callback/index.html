@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TikTok connected | Triangulate</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1d7ce4" />
+    <link rel="icon" type="image/png" href="../../../assets/app/favicon.png" />
+    <link rel="stylesheet" href="../../../styles/site.css?v=202604202005" />
+    <style>
+      body { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+      .oauth-card { width: min(100%, 680px); padding: 1.4rem; border-radius: 32px; background: rgba(255,255,255,0.96); border: 3px solid rgba(255,255,255,0.96); box-shadow: var(--card-shadow); }
+      .oauth-card h1 { margin: 0 0 0.75rem; font-family: var(--font-display); letter-spacing: -0.04em; color: var(--navy-deep); }
+      .oauth-card p { color: var(--ink-muted); }
+      .oauth-code { display: block; width: 100%; min-height: 112px; padding: 1rem; border-radius: 18px; border: 2px solid rgba(79,170,235,0.2); background: #f8fbff; color: var(--ink); font: 0.9rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
+      .oauth-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+      .oauth-status { margin-top: 0.9rem; font-weight: 800; color: var(--navy); }
+    </style>
+  </head>
+  <body>
+    <main class="oauth-card">
+      <p class="eyebrow">TikTok OAuth</p>
+      <h1 id="title">Checking callback…</h1>
+      <p id="message">One moment.</p>
+      <textarea class="oauth-code" id="code" readonly></textarea>
+      <div class="oauth-actions">
+        <button class="button button--primary" id="copy-code" type="button">Copy code</button>
+        <a class="button button--quiet" href="../../../index.html">Back to Triangulate</a>
+      </div>
+      <p class="oauth-status" id="status" aria-live="polite"></p>
+    </main>
+
+    <script>
+      const params = new URLSearchParams(window.location.search)
+      const title = document.getElementById('title')
+      const message = document.getElementById('message')
+      const code = document.getElementById('code')
+      const status = document.getElementById('status')
+      const copy = document.getElementById('copy-code')
+      const error = params.get('error') || params.get('error_description')
+      const returnedCode = params.get('code')
+      const state = params.get('state')
+
+      if (error) {
+        title.textContent = 'TikTok did not connect'
+        message.textContent = error
+        code.value = ''
+        copy.disabled = true
+      } else if (returnedCode) {
+        title.textContent = 'TikTok returned an authorization code'
+        message.textContent = 'Copy this code and exchange it locally for an access token. Do not paste it into public chat.'
+        code.value = state ? returnedCode + '\n\nstate=' + state : returnedCode
+      } else {
+        title.textContent = 'No TikTok code found'
+        message.textContent = 'The callback URL is working, but TikTok did not include a code. Check the redirect URI and app scopes.'
+        code.value = window.location.href
+        copy.disabled = true
+      }
+
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code.value)
+          status.textContent = 'Copied.'
+        } catch {
+          status.textContent = 'Copy failed. Select the text manually.'
+        }
+      })
+    </script>
+  </body>
+</html>

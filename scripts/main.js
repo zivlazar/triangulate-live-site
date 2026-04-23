@@ -3,6 +3,8 @@ import {
   audienceCards,
   heroVisualPrompts,
   quickStartItems,
+  socialChannels,
+  socialPosts,
   steps,
 } from "./content.js";
 import { initLeaderboard } from "./leaderboard.js";
@@ -1109,6 +1111,73 @@ function renderSteps() {
     .join("");
 }
 
+function renderSocialPosts(posts, channels) {
+  if (!posts.length) {
+    return `
+      <article class="social-empty-card">
+        <p class="panel-label">Posts coming next</p>
+        <h3>The accounts are live. The first approved posts will appear here.</h3>
+        <p>
+          Follow ${escapeHtml(channels[0]?.handle || "@triangulate.live")} on Instagram and TikTok now; this section
+          will surface brand-owned TikToks, Reels, and Stories once they are published.
+        </p>
+      </article>
+    `;
+  }
+
+  return posts
+    .map(
+      (post) => `
+        <article class="social-post-card">
+          ${post.image ? `<img class="social-post-card__image" src="${escapeHtml(post.image)}" alt="" loading="lazy" decoding="async" />` : ""}
+          <div class="social-post-card__topline">
+            <span>${escapeHtml(post.platform)}</span>
+            ${post.publishedAt ? `<time datetime="${escapeHtml(post.publishedAt)}">${escapeHtml(post.label || "Latest")}</time>` : ""}
+          </div>
+          <h3>${escapeHtml(post.title)}</h3>
+          <p>${escapeHtml(post.description)}</p>
+          <a class="text-link" href="${escapeHtml(post.href)}" target="_blank" rel="noopener noreferrer">Open post</a>
+        </article>
+      `
+    )
+    .join("");
+}
+
+async function loadSocialPosts() {
+  try {
+    const res = await fetch("./data/social-posts.json", { cache: "no-store" });
+    if (!res.ok) return socialPosts;
+    const payload = await res.json();
+    return Array.isArray(payload.posts) ? payload.posts : socialPosts;
+  } catch {
+    return socialPosts;
+  }
+}
+
+function renderSocialFrontPage() {
+  const channels = document.getElementById("social-channel-grid");
+  const posts = document.getElementById("social-post-grid");
+  if (!channels || !posts) return;
+
+  channels.innerHTML = socialChannels
+    .map(
+      (channel) => `
+        <a class="social-channel-card" href="${escapeHtml(channel.href)}" target="_blank" rel="noopener noreferrer">
+          <span class="social-channel-card__platform">${escapeHtml(channel.platform)}</span>
+          <strong>${escapeHtml(channel.handle)}</strong>
+          <span>${escapeHtml(channel.label)}</span>
+          <p>${escapeHtml(channel.description)}</p>
+        </a>
+      `
+    )
+    .join("");
+
+  posts.innerHTML = renderSocialPosts(socialPosts, socialChannels);
+  loadSocialPosts().then((loadedPosts) => {
+    posts.innerHTML = renderSocialPosts(loadedPosts, socialChannels);
+  });
+}
+
 function markPromptSlots() {
   document.querySelectorAll("[data-prompt-key]").forEach((element) => {
     const key = element.getAttribute("data-prompt-key");
@@ -1154,6 +1223,7 @@ if (document.getElementById("events-grid")) {
 }
 renderAudienceCards();
 renderSteps();
+renderSocialFrontPage();
 markPromptSlots();
 initReveal();
 initLeaderboard();

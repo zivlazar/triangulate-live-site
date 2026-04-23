@@ -392,3 +392,27 @@ export const leaderboardTimes = [
   { key: "weekly", label: "This week" },
   { key: "all_time", label: "All time" },
 ];
+
+export const socialChannels = [
+  {
+    platform: "Instagram",
+    handle: "@triangulate.live",
+    href: "https://www.instagram.com/triangulate.live/",
+    label: "Reels, Stories, event drops",
+    description: "Follow the visual side of Triangulate: event alerts, short explainers, and recaps from the map.",
+  },
+  {
+    platform: "TikTok",
+    handle: "@triangulate.live",
+    href: "https://www.tiktok.com/@triangulate.live",
+    label: "Short clips, tactics, launch energy",
+    description: "Quick videos that show how three points turn a normal place into a real-world strategy game.",
+  },
+];
+
+// Approved public posts can be added here once the social accounts publish.
+// Keep this list to brand-owned posts only, and do not include player names or
+// identifiable user content unless consent is documented.
+// Shape:
+// { platform: "Instagram", title: "...", description: "...", href: "https://...", publishedAt: "2026-04-23", label: "Reel" }
+export const socialPosts = [];

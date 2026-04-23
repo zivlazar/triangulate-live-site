@@ -1,0 +1,36 @@
+{
+  "brand": {
+    "name": "Triangulate",
+    "instagram": "@triangulate.live",
+    "tiktok": "@triangulate.live",
+    "eventsUrl": "https://triangulate.live/events.html"
+  },
+  "location": {
+    "city": "London",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "radiusKm": 50
+  },
+  "cadence": {
+    "dailyOwnedPostTarget": 4,
+    "storyFrameTarget": 4,
+    "leadSuggestionTarget": 12
+  },
+  "safety": {
+    "manualApprovalRequired": true,
+    "allowAutoPosting": false,
+    "allowAutoComments": false,
+    "allowAutoLikes": false,
+    "useEventLevelFactsOnly": true
+  },
+  "leadTargets": [
+    "local gaming events",
+    "social sports",
+    "running clubs",
+    "student events",
+    "outdoor fitness",
+    "company away days",
+    "geocaching",
+    "capture the flag"
+  ]
+}

@@ -303,6 +303,7 @@ a {
 .events-section,
 .audience-section,
 .steps-section,
+.social-section,
 .leaderboard-section,
 .cta-section,
 .page-hero {
@@ -1305,6 +1306,133 @@ body[data-page="home"] .hero-overlay-card {
   background: linear-gradient(135deg, rgba(82, 216, 255, 0.32), rgba(255, 213, 76, 0.52));
   color: var(--navy-deep);
   box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.38);
+}
+
+.social-section {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.48), transparent 16%),
+    radial-gradient(circle at 84% 16%, rgba(255, 213, 76, 0.2), transparent 14%),
+    linear-gradient(180deg, rgba(233, 247, 255, 0.72), rgba(216, 240, 255, 0.96));
+}
+
+.social-shell {
+  position: relative;
+}
+
+.social-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.86fr) minmax(0, 1.14fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.social-channel-grid,
+.social-post-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.8rem;
+}
+
+.social-channel-card,
+.social-post-card,
+.social-empty-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.2rem;
+  border-radius: 30px;
+  text-decoration: none;
+  background:
+    radial-gradient(circle at 84% 14%, rgba(82, 216, 255, 0.24), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 251, 255, 0.94));
+  border: 3px solid rgba(255, 255, 255, 0.96);
+  box-shadow: var(--card-shadow);
+}
+
+.social-channel-card::after,
+.social-post-card::after,
+.social-empty-card::after {
+  content: "";
+  position: absolute;
+  right: -3.6rem;
+  bottom: -4.4rem;
+  width: 11rem;
+  height: 11rem;
+  border: 1.15rem solid rgba(82, 216, 255, 0.18);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.social-channel-card__platform,
+.social-post-card__topline,
+.social-empty-card .panel-label {
+  width: fit-content;
+  color: var(--navy-deep);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.social-channel-card strong,
+.social-post-card h3,
+.social-empty-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 2.6vw, 2rem);
+  letter-spacing: -0.04em;
+  color: var(--navy-deep);
+}
+
+.social-channel-card > span:not(.social-channel-card__platform),
+.social-post-card__topline {
+  color: var(--ink-soft);
+  font-weight: 800;
+}
+
+.social-channel-card p,
+.social-post-card p,
+.social-empty-card p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.social-post-card__topline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.social-post-card__image {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 2px solid rgba(79, 170, 235, 0.14);
+}
+
+.social-empty-card {
+  min-height: 100%;
+  align-content: center;
+  background:
+    radial-gradient(circle at 14% 16%, rgba(255, 213, 76, 0.26), transparent 20%),
+    linear-gradient(135deg, rgba(10, 49, 114, 0.96), rgba(20, 83, 174, 0.92));
+}
+
+.social-empty-card h3,
+.social-empty-card p,
+.social-empty-card .panel-label {
+  color: var(--paper-strong);
+}
+
+.social-empty-card p {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .events-section {
@@ -2391,6 +2519,7 @@ body[data-page="events"] .events-grid--listing .event-card {
   .hero-grid,
   body[data-page="home"] .hero-grid,
   .instant-start-wrap,
+  .social-layout,
   .cta-shell,
   .leaderboard-grid,
   .events-grid,
@@ -2569,6 +2698,7 @@ body[data-page="events"] .events-grid--listing .event-card {
   .events-section,
   .audience-section,
   .steps-section,
+  .social-section,
   .leaderboard-section,
   .cta-section {
     padding: 3.6rem 0;
