@@ -1164,11 +1164,10 @@ function renderSocialPosts(posts, channels) {
   if (!posts.length) {
     return `
       <article class="social-empty-card">
-        <p class="panel-label">Posts coming next</p>
-        <h3>The accounts are live. The first approved posts will appear here.</h3>
+        <p class="panel-label">Latest social</p>
+        <h3>Fresh updates will appear here.</h3>
         <p>
-          Follow ${escapeHtml(channels[0]?.handle || "@triangulate.live")} on Instagram and TikTok now; this section
-          will surface brand-owned TikToks, Reels, and Stories once they are published.
+          Check back soon for the latest Triangulate clips, highlights, and behind-the-scenes moments.
         </p>
       </article>
     `;
