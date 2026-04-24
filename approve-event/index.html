@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Approve event | Triangulate</title>
+    <script>
+      location.replace('/approve-event.html' + location.search + location.hash)
+    </script>
+  </head>
+  <body>
+    <p>
+      Opening approval page...
+      <a id="approval-link" href="/approve-event.html">Continue</a>
+    </p>
+    <script>
+      document.getElementById('approval-link').href = '/approve-event.html' + location.search + location.hash
+    </script>
+  </body>
+</html>
