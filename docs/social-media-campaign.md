@@ -65,7 +65,7 @@ https://triangulate.live/events.html
 
 Profile setup checklist:
 
-- Use the existing brand mark from `assets/brand-mark.svg`.
+- Use the shared app icon from `assets/app/icon.png`.
 - Convert Instagram to a Professional account so official Meta APIs and insights are possible.
 - Create or connect a Meta Business portfolio if Instagram publishing and analytics will be automated.
 - Add `https://triangulate.live/events.html` as the profile link.
