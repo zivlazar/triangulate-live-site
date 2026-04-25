@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
     if (!["preview", "approve", "reject"].includes(action)) throw new Error("Invalid action.");
 
     const row = await fetchRequest(token);
-    if (!row) throw new Error("This approval link was not found in the new live-site project.");
+    if (!row) throw new Error("This approval link was not found.");
 
     if (action === "preview") {
       return json(previewResponse(row));

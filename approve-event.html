@@ -104,12 +104,10 @@
     </div>
 
     <script type="module">
-      const GAME_SUPABASE_URL = 'https://rgczribfoutvpashjgrx.supabase.co'
-      const GAME_SUPABASE_ANON_KEY =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJyZ2N6cmliZm91dHZwYXNoamdyeCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzc2MDExMzIyLCJleHAiOjIwOTE1ODczMjJ9.sAp2ao4iH8xeV9Q-MvYBfhK9T8NSbe_D61e127VWAiE'
+      import { SUPABASE_KEY, SUPABASE_URL } from './scripts/site-config.js'
 
-      const FUNCTION_URL = GAME_SUPABASE_URL + '/functions/v1/event-approval-confirm'
-      const SUPABASE_ANON_KEY = GAME_SUPABASE_ANON_KEY
+      const FUNCTION_URL = SUPABASE_URL + '/functions/v1/event-approval-confirm'
+      const SUPABASE_ANON_KEY = SUPABASE_KEY
 
       const root = document.getElementById('root')
 
