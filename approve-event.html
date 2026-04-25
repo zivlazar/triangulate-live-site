@@ -104,10 +104,14 @@
     </div>
 
     <script type="module">
-      import { SUPABASE_KEY, SUPABASE_URL } from './scripts/site-config.js'
+      import { GAME_SUPABASE_KEY, GAME_SUPABASE_URL } from './scripts/site-config.js'
 
-      const FUNCTION_URL = SUPABASE_URL + '/functions/v1/event-approval-confirm'
-      const SUPABASE_ANON_KEY = SUPABASE_KEY
+      // Approval tokens are HMAC-signed by event-approval-notify on the game
+      // Supabase project, and event-approval-confirm there verifies them
+      // against the events table. The flow lives entirely in the game
+      // project — do not redirect this URL at the live-site project.
+      const FUNCTION_URL = GAME_SUPABASE_URL + '/functions/v1/event-approval-confirm'
+      const SUPABASE_ANON_KEY = GAME_SUPABASE_KEY
 
       const root = document.getElementById('root')
 
