@@ -44,14 +44,13 @@ const INITIAL_EVENT_ID = new URLSearchParams(window.location.search).get("event"
 
 const eventState = {
   center: { ...EVENT_FALLBACK_CENTER },
-  autoLocateAttempted: false,
   error: "",
   events: [],
   expandedEventId: INITIAL_EVENT_ID,
   lastUpdatedAt: null,
   loading: false,
   locationMode: "fallback",
-  locationNote: "Showing public events now. Distances stay hidden until your location is available.",
+  locationNote: "",
   locating: false,
   requestedEventId: INITIAL_EVENT_ID,
   registrations: new Map(),
@@ -131,7 +130,7 @@ function locationsHeadingTitle() {
   if (label && label !== "your location" && label !== EVENT_FALLBACK_CENTER.label) {
     return `Events near ${label}`;
   }
-  return "Events near you";
+  return "Public events";
 }
 
 function renderEventFilters(summary = null) {
@@ -161,14 +160,6 @@ function renderEventFilters(summary = null) {
       <div class="events-toolbar__actions">
         <button class="button button--secondary" type="button" data-event-action="refresh">
           Refresh
-        </button>
-        <button
-          class="button button--quiet"
-          type="button"
-          data-event-action="locate"
-          ${!navigator.geolocation || eventState.locating ? "disabled" : ""}
-        >
-          ${eventState.locating ? "Finding you…" : "Use current location"}
         </button>
       </div>
     </div>
@@ -917,7 +908,7 @@ function renderEvents() {
     grid.innerHTML = `
       <article class="events-empty">
         <p class="panel-label">No live events yet</p>
-        <h3>Nothing nearby is open right now.</h3>
+        <h3>No public events are open right now.</h3>
         <p>Check back soon for upcoming sessions and recent activity.</p>
       </article>
     `;
@@ -996,60 +987,6 @@ async function refreshEvents(nextCenter = eventState.center) {
   }
 }
 
-function getBrowserLocation() {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error("Location is not available in this browser."));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => resolve(position.coords),
-      () => reject(new Error("Couldn’t get your location.")),
-      {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 300000,
-      }
-    );
-  });
-}
-
-async function locateEventsFromBrowser({ silent = false } = {}) {
-  eventState.locating = true;
-  eventState.locationNote = silent
-    ? "Checking your location so distances match where you are."
-    : "Looking for your current location…";
-  renderEventFilters();
-
-  try {
-    const coords = await getBrowserLocation();
-    eventState.locationMode = "browser";
-    eventState.locationNote = "Showing events near your current location.";
-    await refreshEvents({
-      lat: coords.latitude,
-      lng: coords.longitude,
-      label: "your location",
-    });
-  } catch (error) {
-    eventState.locationMode = "fallback";
-    eventState.locationNote = error instanceof Error
-      ? `${error.message} Distances stay hidden until location is available.`
-      : "Couldn’t get your location. Distances stay hidden until location is available.";
-    renderEventFilters();
-  } finally {
-    eventState.locating = false;
-    renderEventFilters();
-  }
-}
-
-function autoLocateEvents() {
-  if (eventState.autoLocateAttempted || !navigator.geolocation) return;
-  if (eventState.requestedEventId) return;
-  eventState.autoLocateAttempted = true;
-  void locateEventsFromBrowser({ silent: true });
-}
-
 async function ensureRegistrations(eventId) {
   if (eventState.registrations.has(eventId) || eventState.registrationsLoading.has(eventId)) {
     return;
@@ -1093,10 +1030,6 @@ function bindEventsPage() {
       if (action === "refresh") {
         await refreshEvents(eventState.center);
         return;
-      }
-
-      if (action === "locate") {
-        await locateEventsFromBrowser();
       }
     });
   }
@@ -1292,7 +1225,6 @@ if (document.getElementById("events-grid")) {
   renderEvents();
   bindEventsPage();
   refreshEvents();
-  autoLocateEvents();
 }
 renderAudienceCards();
 renderSteps();

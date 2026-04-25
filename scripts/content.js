@@ -366,7 +366,7 @@ export const steps = [
   {
     number: "1",
     title: "Join a game",
-    description: "Pick an event or start one nearby.",
+    description: "Pick an event or start one from the app.",
   },
   {
     number: "2",
