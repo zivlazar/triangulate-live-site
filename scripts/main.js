@@ -1147,17 +1147,40 @@ function renderSteps() {
   const grid = document.getElementById("steps-grid");
   if (!grid) return;
 
-  grid.innerHTML = steps
+  const stepItems = steps
     .map(
       (step) => `
-        <article class="step-card">
-          <span class="step-card__number">${step.number}</span>
-          <h3>${step.title}</h3>
-          <p>${step.description}</p>
-        </article>
+        <li class="how-it-works-step">
+          <span class="how-it-works-step__number">${escapeHtml(step.number)}</span>
+          <span>
+            <strong>${escapeHtml(step.title)}</strong>
+            <small>${escapeHtml(step.description)}</small>
+          </span>
+        </li>
       `
     )
     .join("");
+
+  grid.innerHTML = `
+    <div class="how-it-works-graphic">
+      <div class="how-map" aria-hidden="true">
+        <div class="how-map__grid"></div>
+        <div class="how-map__route how-map__route--one"></div>
+        <div class="how-map__route how-map__route--two"></div>
+        <div class="how-map__route how-map__route--three"></div>
+        <div class="how-map__triangle">
+          <span class="how-map__player how-map__player--one">A</span>
+          <span class="how-map__player how-map__player--two">B</span>
+          <span class="how-map__player how-map__player--three">C</span>
+        </div>
+        <div class="how-map__zone how-map__zone--small">Rival team</div>
+        <div class="how-map__zone how-map__zone--large">Your triangle claims the larger area</div>
+      </div>
+      <ol class="how-it-works-list">
+        ${stepItems}
+      </ol>
+    </div>
+  `;
 }
 
 function renderSocialPosts(posts, channels) {
@@ -1205,20 +1228,22 @@ async function loadSocialPosts() {
 function renderSocialFrontPage() {
   const channels = document.getElementById("social-channel-grid");
   const posts = document.getElementById("social-post-grid");
-  if (!channels || !posts) return;
+  if (!posts) return;
 
-  channels.innerHTML = socialChannels
-    .map(
-      (channel) => `
-        <a class="social-channel-card" href="${escapeHtml(channel.href)}" target="_blank" rel="noopener noreferrer">
-          <span class="social-channel-card__platform">${escapeHtml(channel.platform)}</span>
-          <strong>${escapeHtml(channel.handle)}</strong>
-          <span>${escapeHtml(channel.label)}</span>
-          <p>${escapeHtml(channel.description)}</p>
-        </a>
-      `
-    )
-    .join("");
+  if (channels) {
+    channels.innerHTML = socialChannels
+      .map(
+        (channel) => `
+          <a class="social-channel-card" href="${escapeHtml(channel.href)}" target="_blank" rel="noopener noreferrer">
+            <span class="social-channel-card__platform">${escapeHtml(channel.platform)}</span>
+            <strong>${escapeHtml(channel.handle)}</strong>
+            <span>${escapeHtml(channel.label)}</span>
+            <p>${escapeHtml(channel.description)}</p>
+          </a>
+        `
+      )
+      .join("");
+  }
 
   posts.innerHTML = renderSocialPosts(socialPosts, socialChannels);
   loadSocialPosts().then((loadedPosts) => {
