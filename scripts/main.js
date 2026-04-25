@@ -8,7 +8,7 @@ import {
   steps,
 } from "./content.js";
 import { initLeaderboard } from "./leaderboard.js";
-import { SUPABASE_KEY, SUPABASE_URL } from "./site-config.js";
+import { GAME_SUPABASE_KEY, GAME_SUPABASE_URL } from "./site-config.js";
 
 function getCurrentPage() {
   return document.body?.dataset.page || "home";
@@ -57,12 +57,19 @@ const eventState = {
   registrationsLoading: new Set(),
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function viewerUuidOrNull() {
+  const v = typeof localStorage !== "undefined" ? localStorage.getItem("triangulate_player_id") : null;
+  return v && UUID_RE.test(v) ? v : null;
+}
+
 async function sbRpc(fn, payload) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+  const res = await fetch(`${GAME_SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+      apikey: GAME_SUPABASE_KEY,
+      Authorization: `Bearer ${GAME_SUPABASE_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -959,6 +966,7 @@ async function refreshEvents(nextCenter = eventState.center) {
     const rows = await sbRpc("list_public_events_near", {
       p_lat: nextCenter.lat,
       p_lng: nextCenter.lng,
+      p_viewer_id: viewerUuidOrNull(),
       p_radius_km: EVENT_RADIUS_KM,
       p_limit: EVENT_LIMIT,
     });

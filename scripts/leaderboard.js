@@ -1,6 +1,6 @@
 import "./site-core.js";
 import { leaderboardScopes, leaderboardTimes } from "./content.js";
-import { SUPABASE_KEY, SUPABASE_URL } from "./site-config.js";
+import { GAME_SUPABASE_KEY, GAME_SUPABASE_URL } from "./site-config.js";
 
 const TIME_TO_PERIOD = {
   daily: "today",
@@ -20,11 +20,11 @@ function getViewerId() {
 }
 
 async function sbRpc(fn, payload) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+  const res = await fetch(`${GAME_SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+      apikey: GAME_SUPABASE_KEY,
+      Authorization: `Bearer ${GAME_SUPABASE_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
