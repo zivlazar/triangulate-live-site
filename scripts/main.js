@@ -39,7 +39,6 @@ const EVENT_FALLBACK_CENTER = {
 
 const EVENT_RADIUS_KM = 50;
 const EVENT_LIMIT = 50;
-const EVENT_VIEWER_ID = "web-public-viewer";
 const INITIAL_EVENT_ID = new URLSearchParams(window.location.search).get("event") || "";
 
 const eventState = {
@@ -53,8 +52,6 @@ const eventState = {
   locationNote: "",
   locating: false,
   requestedEventId: INITIAL_EVENT_ID,
-  registrations: new Map(),
-  registrationsLoading: new Set(),
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -648,11 +645,10 @@ function placeLabel(event) {
 }
 
 function eventMicrocopy(event) {
-  const host = event.creator_nickname || "Someone";
   const crewSuffix = event.team_member_count ? ` + ${event.team_member_count} crew` : "";
   return event.team_name
-    ? `${event.team_name} hosting · ${host}${crewSuffix}`
-    : `Hosted by ${host}${crewSuffix}`;
+    ? `${event.team_name} hosting${crewSuffix}`
+    : `Hosted by organiser${crewSuffix}`;
 }
 
 function surfaceClassForEvent(event) {
@@ -682,33 +678,10 @@ function scrollToEvent(eventId) {
   });
 }
 
-function attendeeMarkup(registration) {
-  return `
-    <li class="event-attendee">
-      <span class="event-attendee__dot" style="background:${escapeHtml(registration.color || "#7ca3dc")}"></span>
-      <div class="event-attendee__body">
-        <strong>${escapeHtml(registration.nickname || registration.player_id)}</strong>
-        <span>${escapeHtml(registration.status)}</span>
-      </div>
-    </li>
-  `;
-}
-
 function eventDetailsMarkup(event) {
-  const registrationState = eventState.registrations.get(event.id);
-  const isLoadingRegistrations = eventState.registrationsLoading.has(event.id);
   const showDistance = hasViewerLocation();
-  const hasRegistrants = Boolean(registrationState?.rows?.length);
-  const shouldShowRegistrants = isLoadingRegistrations || Boolean(registrationState?.error) || hasRegistrants;
-
-  let attendeeContent = '<p class="event-detail__hint">Nobody has RSVP’d yet.</p>';
-  if (isLoadingRegistrations) {
-    attendeeContent = '<p class="event-detail__hint">Loading who’s going…</p>';
-  } else if (registrationState?.error) {
-    attendeeContent = `<p class="event-detail__hint">${escapeHtml(registrationState.error)}</p>`;
-  } else if (registrationState?.rows?.length) {
-    attendeeContent = `<ul class="event-attendees">${registrationState.rows.map(attendeeMarkup).join("")}</ul>`;
-  }
+  const goingCount = Number(event.registration_count || 0);
+  const goingLabel = `${goingCount} ${goingCount === 1 ? "person" : "people"} going`;
 
   return `
     <div class="event-card__details">
@@ -733,7 +706,7 @@ function eventDetailsMarkup(event) {
         }
         <div class="event-detail-item">
           <span>Host</span>
-          <strong>${escapeHtml(event.creator_nickname || "Someone")}</strong>
+          <strong>Event organiser</strong>
         </div>
         ${
           event.meeting_point_postcode
@@ -766,16 +739,10 @@ function eventDetailsMarkup(event) {
           `
           : ""
       }
-      ${
-        shouldShowRegistrants
-          ? `
-            <div class="event-detail-copy">
-              <span>Who’s going</span>
-              ${attendeeContent}
-            </div>
-          `
-          : ""
-      }
+      <div class="event-detail-copy">
+        <span>Who’s going</span>
+        <p>${escapeHtml(goingLabel)}</p>
+      </div>
     </div>
   `;
 }
@@ -971,7 +938,9 @@ async function refreshEvents(nextCenter = eventState.center) {
       p_limit: EVENT_LIMIT,
     });
 
-    eventState.events = Array.isArray(rows) ? rows : [];
+    eventState.events = Array.isArray(rows)
+      ? rows.filter((event) => event.status === "open" || event.status === "locked_in")
+      : [];
     eventState.lastUpdatedAt = new Date();
 
     if (eventState.requestedEventId && eventState.events.some((event) => event.id === eventState.requestedEventId)) {
@@ -990,37 +959,7 @@ async function refreshEvents(nextCenter = eventState.center) {
   }
 
   if (eventIdToReveal) {
-    await ensureRegistrations(eventIdToReveal);
     scrollToEvent(eventIdToReveal);
-  }
-}
-
-async function ensureRegistrations(eventId) {
-  if (eventState.registrations.has(eventId) || eventState.registrationsLoading.has(eventId)) {
-    return;
-  }
-
-  eventState.registrationsLoading.add(eventId);
-  renderEvents();
-
-  try {
-    const rows = await sbRpc("get_event_registrations", {
-      p_event_id: eventId,
-      p_viewer_player_id: EVENT_VIEWER_ID,
-    });
-
-    eventState.registrations.set(eventId, {
-      error: "",
-      rows: Array.isArray(rows) ? rows : [],
-    });
-  } catch (error) {
-    eventState.registrations.set(eventId, {
-      error: error instanceof Error ? error.message : "Could not load registrations.",
-      rows: [],
-    });
-  } finally {
-    eventState.registrationsLoading.delete(eventId);
-    renderEvents();
   }
 }
 
@@ -1055,7 +994,6 @@ function bindEventsPage() {
       renderEvents();
 
       if (eventState.expandedEventId) {
-        await ensureRegistrations(eventId);
         scrollToEvent(eventId);
       }
     });
