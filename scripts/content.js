@@ -381,16 +381,17 @@ export const steps = [
 ];
 
 export const leaderboardScopes = [
-  { key: "games", label: "Events" },
-  { key: "local", label: "Local" },
-  { key: "city", label: "City" },
-  { key: "global", label: "Global" },
+  { key: "near_me", label: "Near Me" },
+  { key: "friends", label: "Friends" },
+  { key: "events", label: "Events" },
+  { key: "all_time", label: "All Time" },
 ];
 
-export const leaderboardTimes = [
-  { key: "daily", label: "Today" },
-  { key: "weekly", label: "This week" },
-  { key: "all_time", label: "All time" },
+export const leaderboardFilters = [
+  { key: "score", label: "Score" },
+  { key: "wins", label: "Wins" },
+  { key: "streak", label: "Streak" },
+  { key: "teams_played", label: "Teams" },
 ];
 
 export const socialChannels = [

@@ -7,7 +7,7 @@ import {
   socialPosts,
   steps,
 } from "./content.js";
-import { initLeaderboard } from "./leaderboard.js";
+import { initLeaderboard } from "./leaderboard.js?v=202605071";
 import { GAME_SUPABASE_KEY, GAME_SUPABASE_URL } from "./site-config.js";
 
 function getCurrentPage() {

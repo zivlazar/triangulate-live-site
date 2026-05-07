@@ -1,18 +1,19 @@
 import "./site-core.js";
-import { leaderboardScopes, leaderboardTimes } from "./content.js";
+import { leaderboardFilters, leaderboardScopes } from "./content.js";
 import { GAME_SUPABASE_KEY, GAME_SUPABASE_URL } from "./site-config.js";
 
-const TIME_TO_PERIOD = {
-  daily: "today",
-  weekly: "week",
-  all_time: "all_time",
+const VIEW_LABELS = {
+  near_me: "Near Me",
+  friends: "Friends",
+  events: "Events",
+  all_time: "All Time",
 };
 
-const SCOPE_LABELS = {
-  games: "Events",
-  local: "Local players",
-  city: "City players",
-  global: "Global players",
+const FILTER_LABELS = {
+  score: "Score",
+  wins: "Wins",
+  streak: "Streak",
+  teams_played: "Teams",
 };
 
 function getViewerId() {
@@ -37,10 +38,19 @@ async function sbRpc(fn, payload) {
   return res.json();
 }
 
-async function fetchBracket(period) {
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function fetchBracket(view) {
   const data = await sbRpc("get_my_bracket", {
     p_player_id: getViewerId(),
-    p_period: period,
+    p_period: view === "all_time" ? "all_time" : "today",
     p_include_test: true,
   });
 
@@ -48,11 +58,16 @@ async function fetchBracket(period) {
     .slice()
     .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
     .map((row) => ({
+      row_type: "player",
       player_id: row.player_id,
+      player_ids: [row.player_id],
       rank: row.rank ?? 999,
       name: row.nickname || "Unknown",
-      score: row.score || 0,
-      rank_change: row.rank_change || 0,
+      score: Number(row.score || 0),
+      wins: Number(row.wins || 0),
+      current_streak: Number(row.current_streak || 0),
+      team_formations: Number(row.team_games_completed || row.team_formations || 0),
+      rank_change: Number(row.rank_change || 0),
       is_me: Boolean(row.is_me),
       city: row.city || "",
       country: row.country || "",
@@ -62,19 +77,35 @@ async function fetchBracket(period) {
     }));
 }
 
-function locationValue(scope, entry) {
-  switch (scope) {
-    case "games":
-      return entry.last_event || "Recent event";
-    case "local":
-      return entry.local_area || entry.city || "Your area";
-    case "city":
-      return entry.city || entry.country || "Nearby";
-    case "global":
-      return entry.country || "Global";
-    default:
-      return "Recent";
+function metricValue(entry, filter) {
+  if (filter === "score") return Number(entry.score || 0).toLocaleString();
+  if (filter === "wins") return `${Number(entry.wins || 0).toLocaleString()} wins`;
+  if (filter === "streak") return `${Number(entry.current_streak || 0).toLocaleString()} streak`;
+  if (filter === "teams_played") return `${Number(entry.team_formations || 0).toLocaleString()} teams`;
+  return Number(entry.score || 0).toLocaleString();
+}
+
+function sortValue(entry, filter) {
+  if (filter === "wins") return Number(entry.wins || 0);
+  if (filter === "streak") return Number(entry.current_streak || 0);
+  if (filter === "teams_played") return Number(entry.team_formations || 0);
+  return Number(entry.score || 0);
+}
+
+function rowMeta(view, entry, filter) {
+  if (filter === "teams_played") {
+    return "Games played together";
   }
+  if (view === "events") {
+    return entry.last_event || "Event ranking";
+  }
+  if (view === "friends") {
+    return "Friends leaderboard";
+  }
+  if (view === "near_me") {
+    return "Near Me leaderboard";
+  }
+  return "All Time leaderboard";
 }
 
 function updateText(id, value) {
@@ -105,7 +136,7 @@ function renderTabs(containerId, items, activeKey, onSelect) {
   });
 }
 
-function renderLeaderboardRows(players, scope) {
+function renderLeaderboardRows(players, view, filter) {
   const container = document.getElementById("leaderboard-list");
   if (!container) return;
 
@@ -118,22 +149,22 @@ function renderLeaderboardRows(players, scope) {
     .slice(0, 6)
     .map((player, index) => {
       const movement =
-        player.rank_change > 0
-          ? `▲ ${player.rank_change}`
-          : player.rank_change < 0
-            ? `▼ ${Math.abs(player.rank_change)}`
-            : "Steady";
+        filter === "score"
+          ? "Score"
+          : filter === "teams_played"
+            ? "Teams"
+            : FILTER_LABELS[filter] || "Metric";
 
       return `
         <article class="leaderboard-row">
-          <span class="leaderboard-row__rank">${index + 1}</span>
+          <span class="leaderboard-row__rank">${escapeHtml(index + 1)}</span>
           <div>
-            <p class="leaderboard-row__name">${player.is_me ? "You" : player.name}</p>
-            <p class="leaderboard-row__meta">${locationValue(scope, player)} · ${player.last_event_date || "Recent"}</p>
+            <p class="leaderboard-row__name">${escapeHtml(player.is_me ? "You" : player.name)}</p>
+            <p class="leaderboard-row__meta">${escapeHtml(rowMeta(view, player, filter))}</p>
           </div>
           <div class="leaderboard-row__score">
-            <strong>${player.score.toLocaleString()}</strong>
-            <span>${movement}</span>
+            <strong>${escapeHtml(metricValue(player, filter))}</strong>
+            <span>${escapeHtml(movement)}</span>
           </div>
         </article>
       `;
@@ -141,47 +172,42 @@ function renderLeaderboardRows(players, scope) {
     .join("");
 }
 
-function renderBiggestMover(players) {
+function renderCurrentLeader(players, filter) {
   const container = document.getElementById("leaderboard-mover");
   if (!container) return;
 
-  const mover = players
-    .filter((player) => player.rank_change !== 0)
-    .slice()
-    .sort((a, b) => Math.abs(b.rank_change) - Math.abs(a.rank_change))[0];
+  const leader = players[0];
 
-  if (!mover) {
-    container.innerHTML = "<strong>No movement yet</strong><span>Fresh games will show rank jumps here.</span>";
+  if (!leader) {
+    container.innerHTML = "<strong>No leader yet</strong><span>Ranked results will appear here.</span>";
     return;
   }
 
-  const direction = mover.rank_change > 0 ? "Up" : "Down";
   container.innerHTML = `
-    <strong>${mover.is_me ? "You" : mover.name}</strong>
-    <span>${direction} ${Math.abs(mover.rank_change)} places · ${mover.score.toLocaleString()} points</span>
+    <strong>${escapeHtml(leader.is_me ? "You" : leader.name)}</strong>
+    <span>#1 · ${escapeHtml(metricValue(leader, filter))}</span>
   `;
 }
 
-function renderActivity(players, scope) {
+function renderActivity(players, view, filter) {
   const container = document.getElementById("leaderboard-activity");
   if (!container) return;
 
   const topPlayer = players[0];
-  const recentEvent = players.find((player) => player.last_event)?.last_event || "New sessions landing";
-  const topLocation = topPlayer ? locationValue(scope, topPlayer) : "Your area";
+  const topName = topPlayer ? (topPlayer.is_me ? "You" : topPlayer.name) : "Waiting for scores";
 
   container.innerHTML = `
     <div class="stack-card__item">
-      <strong>Top spot</strong>
-      <p>${topLocation}</p>
+      <strong>Category</strong>
+      <p>${escapeHtml(VIEW_LABELS[view] || view)}</p>
     </div>
     <div class="stack-card__item">
-      <strong>Recent event</strong>
-      <p>${recentEvent}</p>
+      <strong>Metric</strong>
+      <p>${escapeHtml(FILTER_LABELS[filter] || filter)}</p>
     </div>
     <div class="stack-card__item">
-      <strong>Top player</strong>
-      <p>${topPlayer ? (topPlayer.is_me ? "You" : topPlayer.name) : "Waiting for scores"}</p>
+      <strong>Top row</strong>
+      <p>${escapeHtml(topName)}</p>
     </div>
   `;
 }
@@ -198,30 +224,37 @@ export function initLeaderboard() {
     return;
   }
 
-  let scope = "local";
-  let time = "daily";
+  let view = "near_me";
+  let filter = "score";
 
-  renderTabs("leaderboard-scope-tabs", leaderboardScopes, scope, (nextScope) => {
-    scope = nextScope;
+  renderTabs("leaderboard-scope-tabs", leaderboardScopes, view, (nextView) => {
+    view = nextView;
     refresh();
   });
 
-  renderTabs("leaderboard-time-tabs", leaderboardTimes, time, (nextTime) => {
-    time = nextTime;
+  renderTabs("leaderboard-filter-tabs", leaderboardFilters, filter, (nextFilter) => {
+    filter = nextFilter;
     refresh();
   });
 
   async function refresh() {
     try {
-      updateText("leaderboard-title", SCOPE_LABELS[scope]);
+      updateText("leaderboard-title", VIEW_LABELS[view]);
       updateText("leaderboard-updated", "Refreshing…");
 
-      const bracket = await fetchBracket(TIME_TO_PERIOD[time]);
-      renderLeaderboardRows(bracket, scope);
-      renderBiggestMover(bracket);
-      renderActivity(bracket, scope);
+      const bracket = await fetchBracket(view);
+      const rows = bracket
+        .slice()
+        .sort((a, b) => {
+          const valueDelta = sortValue(b, filter) - sortValue(a, filter);
+          if (valueDelta !== 0) return valueDelta;
+          return (a.rank ?? 999) - (b.rank ?? 999);
+        });
+      renderLeaderboardRows(rows, view, filter);
+      renderCurrentLeader(rows, filter);
+      renderActivity(rows, view, filter);
       updateText("leaderboard-updated", updatedLabel());
-      updateText("leaderboard-title", `${SCOPE_LABELS[scope]} · ${leaderboardTimes.find((item) => item.key === time)?.label || ""}`);
+      updateText("leaderboard-title", `${VIEW_LABELS[view]} · ${FILTER_LABELS[filter]}`);
     } catch (error) {
       console.error("Leaderboard fetch error:", error);
       const container = document.getElementById("leaderboard-list");
