@@ -105,7 +105,7 @@ function userConfirmationHtml(name: string, city: string) {
     <p>${greeting}</p>
     <p>You're on the Triangulate UK waitlist.</p>
     <p>${cityLine}</p>
-    <p>Three players form a triangle in real space, move with purpose, and try to beat smaller teams. ~20-minute sessions, outdoors, no screens once the game starts.</p>
+    <p>Three players form a triangle in real space, move with purpose, and try to beat smaller teams. ~20-minute sessions, outdoors — the phone's the map, not the show.</p>
     <p>If a mate would enjoy this, send them <a href="https://triangulate.live/waitlist">triangulate.live/waitlist</a> — bigger waitlist = more cities in the rollout.</p>
     <p>— The Triangulate team</p>
   `;
