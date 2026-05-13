@@ -43,6 +43,7 @@ async function insertWaitlistSignup(payload: Record<string, unknown>, req: Reque
   const row = {
     email: cleanText(payload.email, 160).toLowerCase(),
     name: cleanText(payload.name, 120) || null,
+    phone_number: cleanText(payload.phoneNumber, 40) || null,
     city: cleanText(payload.city, 80) || null,
     age_confirmed: Boolean(payload.ageConfirmed),
     analytics_consent: Boolean(payload.analyticsConsent),
@@ -152,9 +153,12 @@ function adminNotificationHtml(row: Record<string, unknown>, links: { attioRecor
 
   const rowId = String(row.id || "");
 
+  const phone = String(row.phone_number || "").trim();
+  const phoneLine = phone ? `<br/><strong>Phone:</strong> ${escapeHtml(phone)}` : "";
+
   return `
     <p>${headline}.</p>
-    <p><strong>Email:</strong> ${escapeHtml(email)}<br/>
+    <p><strong>Email:</strong> ${escapeHtml(email)}${phoneLine}<br/>
     <strong>When:</strong> ${escapeHtml(created)}</p>
     ${acquisitionLine}
     ${sourceLine}
@@ -207,15 +211,43 @@ async function postToAttio(row: Record<string, unknown>) {
   if (fullName) {
     values.name = [{ first_name: firstName, last_name: lastName, full_name: fullName }];
   }
+  const phone = String(row.phone_number || "").trim();
+  if (phone) {
+    // Attio accepts `original_phone_number` plus an optional `country_code`.
+    // Default to GB since the waitlist is UK-only; Attio normalises display
+    // format on its side.
+    values.phone_numbers = [{ original_phone_number: phone, country_code: "GB" }];
+  }
 
-  const res = await fetch("https://api.attio.com/v2/objects/people/records", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ data: { values } }),
-  });
+  // Attio's phone validator rejects anything it considers non-deliverable
+  // (Ofcom-reserved test ranges, typos, foreign country codes that don't
+  // match `country_code: "GB"`, etc.). When that happens, retry the insert
+  // without phone_numbers so the contact still gets created — the raw phone
+  // stays in our DB row regardless.
+  const tryInsert = async (payload: { data: { values: Record<string, unknown> } }) => {
+    return await fetch("https://api.attio.com/v2/objects/people/records", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  };
+
+  let res = await tryInsert({ data: { values } });
+  let usedFallback = false;
+  if (!res.ok && phone) {
+    const errText = await res.text();
+    if (errText.includes("phone_numbers") || errText.includes("Invalid phone")) {
+      const fallback = { ...values };
+      delete fallback.phone_numbers;
+      res = await tryInsert({ data: { values: fallback } });
+      usedFallback = true;
+    } else {
+      return { ok: false, status: res.status, error: errText.slice(0, 300) };
+    }
+  }
   if (!res.ok) {
     const body = await res.text();
     return { ok: false, status: res.status, error: body.slice(0, 300) };
@@ -228,6 +260,7 @@ async function postToAttio(row: Record<string, unknown>) {
     // workspace slug + record type, so we always read it from the API
     // response rather than hand-construct one.
     web_url: json?.data?.web_url,
+    phone_dropped: usedFallback,
   };
 }
 

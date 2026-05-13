@@ -77,6 +77,7 @@ function bindWaitlistForm() {
     const payload = {
       email,
       name: String(formData.get("name") || "").trim(),
+      phoneNumber: String(formData.get("phoneNumber") || "").trim(),
       city: String(formData.get("city") || "").trim(),
       ageConfirmed: String(formData.get("ageConfirmed") || "") === "on",
       responseConsent: String(formData.get("responseConsent") || "") === "on",
