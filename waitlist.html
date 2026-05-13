@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triangulate | Join the UK waitlist</title>
+    <meta
+      name="description"
+      content="Join the UK waitlist for Triangulate, the three-player outdoor game where mates form a triangle in real space."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="./assets/app/favicon.png" />
+    <link rel="stylesheet" href="./styles/site.css?v=202604202005" />
+  </head>
+  <body data-page="waitlist">
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container nav-shell">
+          <a class="brand" href="./index.html" aria-label="Triangulate home">
+            <img src="./assets/app/icon.png" alt="" width="34" height="34" />
+            <span>Triangulate</span>
+          </a>
+          <nav class="site-nav" aria-label="Primary">
+            <a href="./index.html">Home</a>
+            <a href="./events.html">Events</a>
+            <a href="./teams.html">Teams</a>
+            <a href="./leaderboard.html">Leaderboard</a>
+            <a href="./contact.html">Contact</a>
+          </nav>
+          <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+            <span class="nav-toggle__icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-hero">
+          <div class="container page-hero__grid">
+            <div class="section-heading section-heading--left">
+              <p class="eyebrow">UK waitlist</p>
+              <h1 class="page-title">Be there for the first sessions in your city.</h1>
+              <p>
+                Triangulate is an outdoor three-player game. Three mates form a triangle in real space, move
+                with purpose, and try to beat smaller teams. ~20-minute sessions. No screens once it kicks off.
+              </p>
+              <p>
+                We're rolling sessions out city by city across the UK. Drop your email and we'll let you
+                know the moment there's a session you can join.
+              </p>
+            </div>
+            <div class="page-hero__card">
+              <p class="panel-label">What happens after you join</p>
+              <h3>You get one email, then nothing until your city is live.</h3>
+              <p>
+                We'll send a one-off confirmation, then stay quiet. When sessions open in your city, we email
+                you with how to book in. No newsletters. No upsell.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="instant-start-section">
+          <div class="container">
+            <div class="contact-layout">
+              <section class="contact-panel">
+                <form class="contact-form" id="waitlist-form" novalidate>
+                  <div class="contact-form__honeypot" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+                    <label>Leave this field blank
+                      <input type="text" name="_hp" tabindex="-1" autocomplete="off" />
+                    </label>
+                  </div>
+
+                  <div class="contact-form__grid">
+                    <label class="contact-field">
+                      <span>Email *</span>
+                      <input type="email" name="email" maxlength="160" required autocomplete="email" />
+                    </label>
+                    <label class="contact-field">
+                      <span>First name</span>
+                      <input type="text" name="name" maxlength="120" autocomplete="given-name" />
+                    </label>
+                    <label class="contact-field">
+                      <span>City</span>
+                      <select name="city" id="waitlist-city">
+                        <option value="">Pick one</option>
+                        <option value="London">London</option>
+                        <option value="Manchester">Manchester</option>
+                        <option value="Birmingham">Birmingham</option>
+                        <option value="Edinburgh">Edinburgh</option>
+                        <option value="Bristol">Bristol</option>
+                        <option value="Leeds">Leeds</option>
+                        <option value="Glasgow">Glasgow</option>
+                        <option value="Liverpool">Liverpool</option>
+                        <option value="Newcastle">Newcastle</option>
+                        <option value="Sheffield">Sheffield</option>
+                        <option value="Nottingham">Nottingham</option>
+                        <option value="Cardiff">Cardiff</option>
+                        <option value="Belfast">Belfast</option>
+                        <option value="Other">Somewhere else in the UK</option>
+                      </select>
+                    </label>
+                  </div>
+
+                  <label class="contact-checkbox">
+                    <input type="checkbox" name="ageConfirmed" required />
+                    <span>I'm 18 or over. *</span>
+                  </label>
+
+                  <label class="contact-checkbox">
+                    <input type="checkbox" name="responseConsent" required />
+                    <span>I consent to Triangulate storing my email and contacting me about UK sessions. *</span>
+                  </label>
+
+                  <label class="contact-checkbox">
+                    <input type="checkbox" id="waitlist-analytics-consent" name="analyticsConsent" />
+                    <span>I consent to website analytics for this signup so the team can see which campaign brought me here.</span>
+                  </label>
+
+                  <p class="contact-form__privacy">
+                    See the
+                    <a href="./legal/2026-05-03/privacy-policy.html">Privacy policy</a> for what we store and how to ask us to delete it.
+                  </p>
+
+                  <div class="contact-form__actions">
+                    <button class="button button--primary" type="submit">Join the waitlist</button>
+                    <p class="contact-form__status" id="waitlist-form-status" aria-live="polite">
+                      Drop your email and we'll send a confirmation.
+                    </p>
+                  </div>
+                </form>
+              </section>
+
+              <aside class="contact-panel contact-panel--aside">
+                <div class="stack-card__item">
+                  <strong>Why a waitlist?</strong>
+                  <p>Sessions launch city by city. The list helps us prioritise where to put the next session.</p>
+                </div>
+                <div class="stack-card__item">
+                  <strong>UK-only for now</strong>
+                  <p>We're testing the format in the UK first. Other countries come later.</p>
+                </div>
+                <div class="stack-card__item">
+                  <strong>Tell a mate</strong>
+                  <p>Triangulate's a three-player game. If you're in, the natural next step is two mates.</p>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-shell">
+          <div>
+            <a class="brand brand--footer" href="./index.html">
+              <img src="./assets/app/icon.png" alt="" width="30" height="30" />
+              <span>Triangulate</span>
+            </a>
+            <p class="footer-copy">Outdoor team play built around movement, shape, and smart decisions.</p>
+          </div>
+          <div class="footer-links">
+            <a href="./legal/2026-05-03/privacy-policy.html">Privacy policy</a>
+            <a href="./legal/2026-05-03/terms-of-service.html">Terms of Service</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="./scripts/waitlist.js"></script>
+    <script src="./scripts/nav.js?v=1776436676" defer></script>
+  </body>
+</html>
