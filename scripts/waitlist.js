@@ -88,28 +88,25 @@ function bindWaitlistForm() {
       trackingContext: getTrackingContext(),
     };
 
+    let success = false;
     try {
       await submitWaitlist(payload);
       form.reset();
       setStatus(
-        "ok",
+        "success",
         "You're on the list. Check your email for a confirmation."
       );
-      if (submitButton instanceof HTMLButtonElement) {
-        submitButton.textContent = "You're in";
-      }
+      success = true;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to join the waitlist right now.";
       setStatus("error", message);
-      restoreButton(submitButton);
+    } finally {
+      if (submitButton instanceof HTMLButtonElement) {
+        submitButton.disabled = false;
+        submitButton.textContent = success ? "You're in ✓" : "Join the waitlist";
+      }
     }
   });
-}
-
-function restoreButton(button) {
-  if (!(button instanceof HTMLButtonElement)) return;
-  button.disabled = false;
-  button.textContent = "Join the waitlist";
 }
 
 initSiteCore().finally(bindWaitlistForm);
