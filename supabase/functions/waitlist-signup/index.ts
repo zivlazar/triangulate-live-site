@@ -111,12 +111,57 @@ function userConfirmationHtml(name: string, city: string) {
   `;
 }
 
-function adminNotificationHtml(row: Record<string, unknown>) {
-  const lines = Object.entries(row)
-    .filter(([key]) => !["tracking_context", "user_agent"].includes(key))
-    .map(([key, value]) => `<li><strong>${key}:</strong> ${String(value ?? "")}</li>`)
-    .join("");
-  return `<p>New Triangulate UK waitlist signup:</p><ul>${lines}</ul>`;
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c));
+}
+
+function formatTime(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/London" }) + " UK";
+}
+
+function adminNotificationHtml(row: Record<string, unknown>, links: { attioRecordId?: string } = {}) {
+  const name = String(row.name || "").trim();
+  const email = String(row.email || "").trim();
+  const city = String(row.city || "").trim();
+  const created = formatTime(String(row.created_at || ""));
+  const headline = name
+    ? `<strong>${escapeHtml(name)}</strong>${city ? ` (${escapeHtml(city)})` : ""} joined the UK waitlist`
+    : `<strong>${escapeHtml(email)}</strong>${city ? ` (${escapeHtml(city)})` : ""} joined the UK waitlist`;
+
+  const utm = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]
+    .map((k) => ({ k, v: String(row[k] || "").trim() }))
+    .filter((p) => p.v);
+  const acquisitionLine = utm.length
+    ? `<p><strong>Acquisition:</strong> ${utm.map((p) => `${p.k.replace("utm_", "")}=${escapeHtml(p.v)}`).join(" · ")}</p>`
+    : `<p><strong>Acquisition:</strong> direct (no UTMs)</p>`;
+
+  const sourcePage = String(row.source_page || "").trim();
+  const referrer = String(row.referrer || "").trim();
+  const sourceParts = [
+    sourcePage ? `page <code>${escapeHtml(sourcePage)}</code>` : null,
+    referrer ? `referrer ${escapeHtml(referrer)}` : null,
+  ].filter(Boolean);
+  const sourceLine = sourceParts.length ? `<p><strong>Source:</strong> ${sourceParts.join(" · ")}</p>` : "";
+
+  const attioLink = links.attioRecordId
+    ? `<p><a href="https://app.attio.com/triangulate/person/${links.attioRecordId}">→ View in Attio</a></p>`
+    : "";
+
+  const rowId = String(row.id || "");
+
+  return `
+    <p>${headline}.</p>
+    <p><strong>Email:</strong> ${escapeHtml(email)}<br/>
+    <strong>When:</strong> ${escapeHtml(created)}</p>
+    ${acquisitionLine}
+    ${sourceLine}
+    ${attioLink}
+    <hr style="border:none;border-top:1px solid #ddd;margin:1em 0;"/>
+    <p style="color:#888;font-size:12px;">Waitlist row id: <code>${escapeHtml(rowId)}</code></p>
+  `;
 }
 
 /**
@@ -270,16 +315,24 @@ Deno.serve(async (req) => {
       const name = cleanText(payload.name, 120);
       const cityForCopy = cleanText(payload.city, 80);
 
-      [userEmailSent, adminEmailSent, attioResult, mixpanelResult] = await Promise.all([
+      // Fire Attio first so the admin notification can link to the new
+      // CRM record. Then run the other three in parallel.
+      attioResult = await postToAttio(row).catch((err) => {
+        console.error("attio failed:", err);
+        return { ok: false, error: err.message };
+      });
+      const attioRecordId = (attioResult as { record_id?: string })?.record_id;
+      const adminSubject = `New signup: ${name || email}${cityForCopy ? ` (${cityForCopy})` : ""}`;
+
+      [userEmailSent, adminEmailSent, mixpanelResult] = await Promise.all([
         sendEmail(email, "You're on the Triangulate UK waitlist", userConfirmationHtml(name, cityForCopy)).catch(
           (err) => { console.error("user email failed:", err); return false; },
         ),
         sendEmail(
           env("WAITLIST_ADMIN_EMAIL", env("CONTACT_ADMIN_EMAIL", "triangulate.game@gmail.com")),
-          `New waitlist signup: ${email}${cityForCopy ? ` (${cityForCopy})` : ""}`,
-          adminNotificationHtml(row),
+          adminSubject,
+          adminNotificationHtml(row, { attioRecordId }),
         ).catch((err) => { console.error("admin email failed:", err); return false; }),
-        postToAttio(row).catch((err) => { console.error("attio failed:", err); return { ok: false, error: err.message }; }),
         trackMixpanel(row).catch((err) => { console.error("mixpanel failed:", err); return { ok: false, error: err.message }; }),
       ]);
     }
