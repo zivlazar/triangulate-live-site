@@ -119,6 +119,116 @@ function adminNotificationHtml(row: Record<string, unknown>) {
   return `<p>New Triangulate UK waitlist signup:</p><ul>${lines}</ul>`;
 }
 
+/**
+ * Push the signup into Attio CRM as a Person record. Reuses the existing
+ * Triangulate workspace's `people` object with these defaults — no schema
+ * additions required:
+ *   - segment: "community" (closest existing option for inbound/self-served)
+ *   - status: "target" (downstream pipeline starts at target, then "contacted"
+ *     etc. — admin can re-tag later in Attio)
+ *   - source_tracker: "waitlist-signup" (lets admin filter to a clean
+ *     "Waitlist Signups" view without a new segment)
+ *   - phase: "1" · cohort: "B" (we enforce 18+ at signup)
+ * Best-effort: failures here are logged but never break the signup.
+ */
+async function postToAttio(row: Record<string, unknown>) {
+  const apiKey = env("ATTIO_API_KEY");
+  if (!apiKey) return { skipped: true, reason: "ATTIO_API_KEY not set" };
+
+  const fullName = String(row.name || "").trim();
+  const firstName = fullName.split(/\s+/)[0] || "";
+  const lastName = fullName.split(/\s+/).slice(1).join(" ") || "";
+  const city = String(row.city || "").trim();
+  const utmSource = String(row.utm_source || "").trim();
+  const utmCampaign = String(row.utm_campaign || "").trim();
+  const notesParts = [
+    `Waitlist signup ${String(row.created_at || "").slice(0, 10)}`,
+    city ? `city=${city}` : null,
+    utmSource ? `utm_source=${utmSource}` : null,
+    utmCampaign ? `utm_campaign=${utmCampaign}` : null,
+  ].filter(Boolean);
+
+  const values: Record<string, unknown> = {
+    email_addresses: [{ email_address: String(row.email) }],
+    segment: [{ option: "community" }],
+    status: [{ status: "target" }],
+    cohort: [{ option: "B" }],
+    phase: [{ option: "1" }],
+    channel: [{ option: "web form" }],
+    source_tracker: [{ value: "waitlist-signup" }],
+    last_action: [{ value: String(row.created_at || "").slice(0, 10) }],
+    notes: [{ value: notesParts.join(" · ") }],
+  };
+  if (fullName) {
+    values.name = [{ first_name: firstName, last_name: lastName, full_name: fullName }];
+  }
+
+  const res = await fetch("https://api.attio.com/v2/objects/people/records", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ data: { values } }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    return { ok: false, status: res.status, error: body.slice(0, 300) };
+  }
+  const json = await res.json();
+  return { ok: true, record_id: json?.data?.id?.record_id };
+}
+
+/**
+ * Server-side Mixpanel event. Idempotent on Mixpanel's side via $insert_id =
+ * waitlist row UUID. Properties match the standard utm/campaign analytics
+ * shape so dashboards can pivot by source / campaign / city.
+ * No-ops if MIXPANEL_TOKEN is not set.
+ */
+async function trackMixpanel(row: Record<string, unknown>) {
+  const token = env("MIXPANEL_TOKEN");
+  if (!token) return { skipped: true, reason: "MIXPANEL_TOKEN not set" };
+
+  const apiHost = env("MIXPANEL_API_HOST", "https://api-eu.mixpanel.com");
+  const email = String(row.email || "");
+  const createdAt = row.created_at ? new Date(String(row.created_at)).getTime() / 1000 : Date.now() / 1000;
+
+  const event = {
+    event: "Waitlist Joined",
+    properties: {
+      token,
+      time: Math.floor(createdAt),
+      $insert_id: String(row.id || crypto.randomUUID()),
+      distinct_id: email,
+      $email: email,
+      city: row.city || null,
+      utm_source: row.utm_source || null,
+      utm_medium: row.utm_medium || null,
+      utm_campaign: row.utm_campaign || null,
+      utm_content: row.utm_content || null,
+      utm_term: row.utm_term || null,
+      source_page: row.source_page || null,
+      referrer: row.referrer || null,
+      age_confirmed: row.age_confirmed,
+      analytics_consent: row.analytics_consent,
+    },
+  };
+
+  // Mixpanel /track accepts a single event or array as form-encoded `data` param
+  // (the JSON-body form also works but `data` is the documented contract).
+  const body = new URLSearchParams({ data: JSON.stringify([event]) });
+  const res = await fetch(`${apiHost}/track`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  const text = await res.text();
+  if (!res.ok || text.trim() === "0") {
+    return { ok: false, status: res.status, error: text.slice(0, 200) };
+  }
+  return { ok: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Method not allowed." }, 405);
@@ -146,33 +256,40 @@ Deno.serve(async (req) => {
     const { isNew, row } = await insertWaitlistSignup(payload, req);
 
     // Always reply success regardless of new-vs-duplicate to avoid revealing
-    // whether the email was previously seen. Email confirmation only fires
-    // for new signups (avoid spamming people who re-submit).
+    // whether the email was previously seen. Email + CRM + analytics fire
+    // only for new signups (avoid duplicate work).
     let userEmailSent = false;
     let adminEmailSent = false;
+    let attioResult: unknown = { skipped: true, reason: "not new" };
+    let mixpanelResult: unknown = { skipped: true, reason: "not new" };
     if (isNew) {
+      // Side-effects are independently wrapped so any one failure doesn't
+      // block the others, and a thrown error from any of them doesn't break
+      // the signup response. The signup is already persisted; downstream
+      // failures are logged in the response body for Dashboard inspection.
       const name = cleanText(payload.name, 120);
       const cityForCopy = cleanText(payload.city, 80);
-      userEmailSent = await sendEmail(
-        email,
-        "You're on the Triangulate UK waitlist",
-        userConfirmationHtml(name, cityForCopy),
-      );
-      const adminEmail = env("WAITLIST_ADMIN_EMAIL", env("CONTACT_ADMIN_EMAIL", "triangulate.game@gmail.com"));
-      adminEmailSent = await sendEmail(
-        adminEmail,
-        `New waitlist signup: ${email}${cityForCopy ? ` (${cityForCopy})` : ""}`,
-        adminNotificationHtml(row),
-      );
+
+      [userEmailSent, adminEmailSent, attioResult, mixpanelResult] = await Promise.all([
+        sendEmail(email, "You're on the Triangulate UK waitlist", userConfirmationHtml(name, cityForCopy)).catch(
+          (err) => { console.error("user email failed:", err); return false; },
+        ),
+        sendEmail(
+          env("WAITLIST_ADMIN_EMAIL", env("CONTACT_ADMIN_EMAIL", "triangulate.game@gmail.com")),
+          `New waitlist signup: ${email}${cityForCopy ? ` (${cityForCopy})` : ""}`,
+          adminNotificationHtml(row),
+        ).catch((err) => { console.error("admin email failed:", err); return false; }),
+        postToAttio(row).catch((err) => { console.error("attio failed:", err); return { ok: false, error: err.message }; }),
+        trackMixpanel(row).catch((err) => { console.error("mixpanel failed:", err); return { ok: false, error: err.message }; }),
+      ]);
     }
 
     return json({
       ok: true,
       emailSent: userEmailSent,
       adminEmailSent,
-      // Don't leak whether the signup is new or duplicate to the client —
-      // both look identical externally. The flag above is only true on
-      // genuinely new rows because email-send is gated on `isNew`.
+      attio: attioResult,
+      mixpanel: mixpanelResult,
     });
   } catch (error) {
     return json(
