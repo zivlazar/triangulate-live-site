@@ -122,7 +122,7 @@ function formatTime(iso: string) {
   return d.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/London" }) + " UK";
 }
 
-function adminNotificationHtml(row: Record<string, unknown>, links: { attioRecordId?: string } = {}) {
+function adminNotificationHtml(row: Record<string, unknown>, links: { attioRecordId?: string; attioWebUrl?: string } = {}) {
   const name = String(row.name || "").trim();
   const email = String(row.email || "").trim();
   const city = String(row.city || "").trim();
@@ -146,8 +146,8 @@ function adminNotificationHtml(row: Record<string, unknown>, links: { attioRecor
   ].filter(Boolean);
   const sourceLine = sourceParts.length ? `<p><strong>Source:</strong> ${sourceParts.join(" · ")}</p>` : "";
 
-  const attioLink = links.attioRecordId
-    ? `<p><a href="https://app.attio.com/triangulate/person/${links.attioRecordId}">→ View in Attio</a></p>`
+  const attioLink = links.attioWebUrl
+    ? `<p><a href="${escapeHtml(links.attioWebUrl)}">→ View in Attio</a></p>`
     : "";
 
   const rowId = String(row.id || "");
@@ -221,7 +221,14 @@ async function postToAttio(row: Record<string, unknown>) {
     return { ok: false, status: res.status, error: body.slice(0, 300) };
   }
   const json = await res.json();
-  return { ok: true, record_id: json?.data?.id?.record_id };
+  return {
+    ok: true,
+    record_id: json?.data?.id?.record_id,
+    // web_url is the canonical Attio link to the record. It varies by
+    // workspace slug + record type, so we always read it from the API
+    // response rather than hand-construct one.
+    web_url: json?.data?.web_url,
+  };
 }
 
 /**
@@ -322,6 +329,7 @@ Deno.serve(async (req) => {
         return { ok: false, error: err.message };
       });
       const attioRecordId = (attioResult as { record_id?: string })?.record_id;
+      const attioWebUrl = (attioResult as { web_url?: string })?.web_url;
       const adminSubject = `New signup: ${name || email}${cityForCopy ? ` (${cityForCopy})` : ""}`;
 
       [userEmailSent, adminEmailSent, mixpanelResult] = await Promise.all([
@@ -331,7 +339,7 @@ Deno.serve(async (req) => {
         sendEmail(
           env("WAITLIST_ADMIN_EMAIL", env("CONTACT_ADMIN_EMAIL", "triangulate.game@gmail.com")),
           adminSubject,
-          adminNotificationHtml(row, { attioRecordId }),
+          adminNotificationHtml(row, { attioRecordId, attioWebUrl }),
         ).catch((err) => { console.error("admin email failed:", err); return false; }),
         trackMixpanel(row).catch((err) => { console.error("mixpanel failed:", err); return { ok: false, error: err.message }; }),
       ]);
