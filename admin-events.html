@@ -14,7 +14,7 @@
       rel="stylesheet"
     />
     <link rel="icon" type="image/png" href="./assets/app/favicon.png" />
-    <link rel="stylesheet" href="./styles/site.css?v=202605201800" />
+    <link rel="stylesheet" href="./styles/site.css?v=202605202000" />
   </head>
   <body data-page="admin-events">
     <div class="site-shell">
@@ -67,15 +67,10 @@
 
             <!-- ─── Dashboard root ───────────────────────────────────── -->
             <section class="admin-dashboard event-admin" id="admin-dashboard" hidden>
-              <!-- Tabs -->
               <nav class="event-admin__tabs" id="event-admin-tabs" role="tablist">
                 <button type="button" class="event-admin__tab is-active" role="tab" data-tab="dashboard">Dashboard</button>
                 <button type="button" class="event-admin__tab" role="tab" data-tab="events">Events</button>
-                <button type="button" class="event-admin__tab" role="tab" data-tab="participants">Participants</button>
-                <button type="button" class="event-admin__tab" role="tab" data-tab="teams">Teams</button>
-                <button type="button" class="event-admin__tab" role="tab" data-tab="comms">Comms</button>
-                <button type="button" class="event-admin__tab" role="tab" data-tab="reports">Reports</button>
-                <button type="button" class="event-admin__tab" role="tab" data-tab="audit">Audit</button>
+                <button type="button" class="event-admin__tab" role="tab" data-tab="venues">Meeting points</button>
               </nav>
 
               <div class="event-admin__toolbar">
@@ -94,13 +89,12 @@
                   <div class="event-admin__card event-admin__card--wide">
                     <header class="event-admin__card-head">
                       <div>
-                        <p class="panel-label">Upcoming 14 days</p>
+                        <p class="panel-label">Upcoming live events</p>
                         <h3>Schedule timeline</h3>
                       </div>
                       <div class="event-admin__legend">
-                        <span class="event-pill event-pill--scheduled">scheduled</span>
-                        <span class="event-pill event-pill--live">live</span>
-                        <span class="event-pill event-pill--postponed">postponed</span>
+                        <span class="event-pill event-pill--open">open</span>
+                        <span class="event-pill event-pill--locked_in">locked_in</span>
                       </div>
                     </header>
                     <div class="event-timeline" id="event-timeline"></div>
@@ -112,34 +106,13 @@
                     <header class="event-admin__card-head">
                       <div>
                         <p class="panel-label">Pending approvals</p>
-                        <h3 id="pending-approvals-title">Players awaiting approval</h3>
+                        <h3>Events awaiting approval</h3>
                       </div>
                       <div class="event-pending-head-actions">
                         <button id="approve-all-pending" class="button button--primary button--small" type="button" disabled>Approve all</button>
                       </div>
                     </header>
                     <ul class="event-pending-list" id="event-pending-list"></ul>
-                  </div>
-                </div>
-
-                <div class="event-admin__row event-admin__row--two">
-                  <div class="event-admin__card">
-                    <header class="event-admin__card-head">
-                      <div>
-                        <p class="panel-label">Recent activity</p>
-                        <h3>Last 10 actions</h3>
-                      </div>
-                    </header>
-                    <ul class="event-activity-list" id="event-activity-list"></ul>
-                  </div>
-                  <div class="event-admin__card">
-                    <header class="event-admin__card-head">
-                      <div>
-                        <p class="panel-label">Capacity overview</p>
-                        <h3>Top 6 sessions by fill</h3>
-                      </div>
-                    </header>
-                    <ul class="event-capacity-list" id="event-capacity-list"></ul>
                   </div>
                 </div>
               </section>
@@ -154,17 +127,7 @@
                   <div class="event-admin__panel-actions">
                     <select id="event-filter-status" class="event-select">
                       <option value="">All statuses</option>
-                      <option value="draft">Draft</option>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="live">Live</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="postponed">Postponed</option>
                     </select>
-                    <select id="event-filter-city" class="event-select">
-                      <option value="">All cities</option>
-                    </select>
-                    <button class="button button--primary" type="button" id="event-new">+ New event</button>
                   </div>
                 </header>
                 <div class="event-table-wrap">
@@ -173,9 +136,9 @@
                       <tr>
                         <th>When</th>
                         <th>Event</th>
-                        <th>City / venue</th>
+                        <th>Meeting point</th>
                         <th>Status</th>
-                        <th>Capacity</th>
+                        <th class="event-table__num">RSVPs</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -184,165 +147,24 @@
                 </div>
               </section>
 
-              <!-- ─── Participants tab ──────────────────────────────── -->
-              <section class="event-admin__panel" data-panel="participants" id="event-admin-panel-participants" hidden>
+              <!-- ─── Meeting points tab ─────────────────────────────── -->
+              <section class="event-admin__panel" data-panel="venues" id="event-admin-panel-venues" hidden>
                 <header class="event-admin__panel-head">
                   <div>
-                    <p class="panel-label">People</p>
-                    <h3 id="participant-summary">Loading participants…</h3>
-                  </div>
-                  <div class="event-admin__panel-actions">
-                    <input type="search" id="participant-search" placeholder="Search username or city…" class="event-input" />
-                    <button class="button button--secondary" type="button" id="participant-export">Export CSV</button>
+                    <p class="panel-label">Meeting points</p>
+                    <h3 id="venues-summary">Loading…</h3>
                   </div>
                 </header>
                 <div class="event-table-wrap">
-                  <table class="event-table" id="participant-table">
+                  <table class="event-table">
                     <thead>
                       <tr>
-                        <th><input type="checkbox" id="participant-select-all" /></th>
-                        <th>Username</th>
+                        <th>Name</th>
                         <th>City</th>
-                        <th class="event-table__num">Attended</th>
-                        <th class="event-table__num">No-shows</th>
-                        <th>Last seen</th>
-                        <th></th>
+                        <th>Postcode / address</th>
                       </tr>
                     </thead>
-                    <tbody id="participant-table-body"></tbody>
-                  </table>
-                </div>
-              </section>
-
-              <!-- ─── Teams tab ─────────────────────────────────────── -->
-              <section class="event-admin__panel" data-panel="teams" id="event-admin-panel-teams" hidden>
-                <header class="event-admin__panel-head">
-                  <div>
-                    <p class="panel-label">Teams</p>
-                    <h3 id="teams-summary">Loading teams…</h3>
-                  </div>
-                </header>
-                <div class="event-teams-grid" id="event-teams-grid"></div>
-              </section>
-
-              <!-- ─── Comms tab ─────────────────────────────────────── -->
-              <section class="event-admin__panel" data-panel="comms" id="event-admin-panel-comms" hidden>
-                <header class="event-admin__panel-head">
-                  <div>
-                    <p class="panel-label">Communications</p>
-                    <h3 id="comms-summary">Loading comms log…</h3>
-                  </div>
-                  <div class="event-admin__panel-actions">
-                    <select id="comms-filter-channel" class="event-select">
-                      <option value="">All channels</option>
-                      <option value="email">Email</option>
-                      <option value="sms">SMS</option>
-                      <option value="push">Push</option>
-                    </select>
-                    <select id="comms-filter-status" class="event-select">
-                      <option value="">All statuses</option>
-                      <option value="queued">Queued</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="opened">Opened</option>
-                      <option value="clicked">Clicked</option>
-                      <option value="failed">Failed</option>
-                      <option value="bounced">Bounced</option>
-                    </select>
-                  </div>
-                </header>
-                <div class="event-table-wrap">
-                  <table class="event-table">
-                    <thead>
-                      <tr>
-                        <th>Sent</th>
-                        <th>Channel</th>
-                        <th>Subject</th>
-                        <th>Recipient</th>
-                        <th>Event</th>
-                        <th>Status</th>
-                        <th>Template</th>
-                      </tr>
-                    </thead>
-                    <tbody id="comms-table-body"></tbody>
-                  </table>
-                </div>
-              </section>
-
-              <!-- ─── Reports tab ───────────────────────────────────── -->
-              <section class="event-admin__panel" data-panel="reports" id="event-admin-panel-reports" hidden>
-                <div class="event-kpi-grid" id="reports-kpi-grid"></div>
-
-                <div class="event-admin__row event-admin__row--two">
-                  <div class="event-admin__card">
-                    <header class="event-admin__card-head">
-                      <div>
-                        <p class="panel-label">Funnel — Mixpanel</p>
-                        <h3>Waitlist → registered → attended</h3>
-                      </div>
-                      <span id="mixpanel-status" class="event-data-tag">connecting…</span>
-                    </header>
-                    <div class="event-funnel" id="mixpanel-funnel"></div>
-                  </div>
-
-                  <div class="event-admin__card">
-                    <header class="event-admin__card-head">
-                      <div>
-                        <p class="panel-label">CRM — Attio</p>
-                        <h3>Linked records</h3>
-                      </div>
-                      <span id="attio-status" class="event-data-tag">connecting…</span>
-                    </header>
-                    <ul class="event-attio-list" id="attio-list"></ul>
-                  </div>
-                </div>
-
-                <div class="event-admin__card">
-                  <header class="event-admin__card-head">
-                    <div>
-                      <p class="panel-label">Attendance &amp; feedback</p>
-                      <h3>Per-event performance (last 90 days)</h3>
-                    </div>
-                  </header>
-                  <div class="event-table-wrap">
-                    <table class="event-table">
-                      <thead>
-                        <tr>
-                          <th>Event</th>
-                          <th>Date</th>
-                          <th class="event-table__num">Registered</th>
-                          <th class="event-table__num">Attended</th>
-                          <th class="event-table__num">No-show %</th>
-                          <th class="event-table__num">NPS</th>
-                          <th class="event-table__num">Avg ★</th>
-                          <th class="event-table__num">Would return</th>
-                        </tr>
-                      </thead>
-                      <tbody id="reports-table-body"></tbody>
-                    </table>
-                  </div>
-                </div>
-              </section>
-
-              <!-- ─── Audit tab ─────────────────────────────────────── -->
-              <section class="event-admin__panel" data-panel="audit" id="event-admin-panel-audit" hidden>
-                <header class="event-admin__panel-head">
-                  <div>
-                    <p class="panel-label">Audit log</p>
-                    <h3 id="audit-summary">Loading admin actions…</h3>
-                  </div>
-                </header>
-                <div class="event-table-wrap">
-                  <table class="event-table">
-                    <thead>
-                      <tr>
-                        <th>When</th>
-                        <th>Admin</th>
-                        <th>Action</th>
-                        <th>Entity</th>
-                        <th>Payload</th>
-                      </tr>
-                    </thead>
-                    <tbody id="audit-table-body"></tbody>
+                    <tbody id="venues-table-body"></tbody>
                   </table>
                 </div>
               </section>
@@ -384,92 +206,7 @@
       </aside>
     </div>
 
-    <!-- ─── New event modal ─────────────────────────────────────────── -->
-    <div class="event-modal" id="event-modal" hidden>
-      <div class="event-modal__scrim" data-close-modal></div>
-      <form class="event-modal__panel" id="event-modal-form" novalidate>
-        <header class="event-modal__head">
-          <div>
-            <p class="panel-label">New event</p>
-            <h2 id="event-modal-title">Create event</h2>
-          </div>
-          <button class="button button--ghost" type="button" data-close-modal aria-label="Close">×</button>
-        </header>
-        <div class="event-modal__body">
-          <label class="event-field">
-            <span>Name</span>
-            <input name="name" required maxlength="160" />
-          </label>
-          <label class="event-field">
-            <span>Description</span>
-            <textarea name="description" rows="3" maxlength="800"></textarea>
-          </label>
-          <div class="event-field-row">
-            <label class="event-field">
-              <span>Type</span>
-              <select name="event_type">
-                <option value="session">Session</option>
-                <option value="tournament">Tournament</option>
-                <option value="open_day">Open day</option>
-                <option value="training">Training</option>
-                <option value="partner">Partner</option>
-                <option value="press">Press</option>
-              </select>
-            </label>
-            <label class="event-field">
-              <span>Status</span>
-              <select name="status">
-                <option value="draft">Draft</option>
-                <option value="scheduled" selected>Scheduled</option>
-                <option value="live">Live</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="postponed">Postponed</option>
-              </select>
-            </label>
-          </div>
-          <div class="event-field-row">
-            <label class="event-field">
-              <span>Starts at</span>
-              <input name="starts_at" type="datetime-local" required />
-            </label>
-            <label class="event-field">
-              <span>Ends at</span>
-              <input name="ends_at" type="datetime-local" required />
-            </label>
-          </div>
-          <div class="event-field-row">
-            <label class="event-field">
-              <span>Venue</span>
-              <select name="venue_id" id="event-modal-venue">
-                <option value="">—</option>
-              </select>
-            </label>
-            <label class="event-field">
-              <span>City</span>
-              <input name="city" maxlength="80" />
-            </label>
-          </div>
-          <div class="event-field-row">
-            <label class="event-field">
-              <span>Capacity</span>
-              <input name="capacity" type="number" min="3" max="200" value="24" />
-            </label>
-            <label class="event-field">
-              <span>Waitlist cap</span>
-              <input name="waitlist_capacity" type="number" min="0" max="100" value="8" />
-            </label>
-          </div>
-          <p class="admin-inline-status" id="event-modal-status" aria-live="polite"></p>
-        </div>
-        <footer class="event-modal__foot">
-          <button type="button" class="button button--ghost" data-close-modal>Cancel</button>
-          <button type="submit" class="button button--primary" id="event-modal-submit">Create event</button>
-        </footer>
-      </form>
-    </div>
-
-    <script type="module" src="./scripts/admin-events.js?v=202605201800"></script>
+    <script type="module" src="./scripts/admin-events.js?v=202605202000"></script>
     <script src="./scripts/nav.js?v=1776436676" defer></script>
   </body>
 </html>

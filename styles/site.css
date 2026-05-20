@@ -3539,11 +3539,18 @@ body[data-page="events"] .events-grid--listing .event-card {
   white-space: nowrap;
 }
 
+/* Game-schema event statuses: pending / open / locked_in / done / cancelled / rejected */
+.event-pill--pending   { background: #fff0c2; color: #614200; border-color: #e0b94a; }
+.event-pill--open      { background: rgba(21, 73, 143, 0.12); color: var(--navy-deep); border-color: rgba(21, 73, 143, 0.25); }
+.event-pill--locked_in { background: #ffe8b0; color: #7a4a00; border-color: #f4a100; }
+.event-pill--done      { background: #d4f4dd; color: #14542d; border-color: #6cc18d; }
+.event-pill--cancelled { background: #ffd8d0; color: #8c200d; border-color: #d56b58; }
+.event-pill--rejected  { background: rgba(0, 0, 0, 0.06); color: var(--ink-muted); border-color: rgba(0, 0, 0, 0.12); }
+.event-pill--draft     { background: rgba(0, 0, 0, 0.06); color: var(--ink-muted); border-color: rgba(0, 0, 0, 0.12); }
+/* Legacy aliases kept so older states render harmlessly if seen */
 .event-pill--scheduled { background: rgba(21, 73, 143, 0.12); color: var(--navy-deep); border-color: rgba(21, 73, 143, 0.25); }
 .event-pill--live      { background: #ffe8b0; color: #7a4a00; border-color: #f4a100; }
-.event-pill--draft     { background: rgba(0, 0, 0, 0.06); color: var(--ink-muted); border-color: rgba(0, 0, 0, 0.12); }
 .event-pill--completed { background: #d4f4dd; color: #14542d; border-color: #6cc18d; }
-.event-pill--cancelled { background: #ffd8d0; color: #8c200d; border-color: #d56b58; }
 .event-pill--postponed { background: #fff0c2; color: #614200; border-color: #e0b94a; }
 .event-pill--ok        { background: #d4f4dd; color: #14542d; border-color: #6cc18d; }
 .event-pill--warn      { background: #fff0c2; color: #614200; border-color: #e0b94a; }
