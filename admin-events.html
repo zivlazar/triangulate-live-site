@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Triangulate Admin | Event management</title>
+    <meta name="description" content="Admin event management portal for Triangulate sessions and tournaments." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#1d7ce4" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="./assets/app/favicon.png" />
+    <link rel="stylesheet" href="./styles/site.css?v=202605191400" />
+  </head>
+  <body data-page="admin-events">
+    <div class="site-shell">
+      <header class="site-header">
+        <div class="container nav-shell">
+          <a class="brand" href="./index.html" aria-label="Triangulate home">
+            <img src="./assets/app/icon.png" alt="" width="34" height="34" />
+            <span>Triangulate</span>
+          </a>
+          <nav class="site-nav" aria-label="Primary">
+            <a href="./index.html">Home</a>
+            <a href="./events.html">Events</a>
+            <a href="./teams.html">Teams</a>
+            <a href="./leaderboard.html">Leaderboard</a>
+            <a href="./contact.html">Contact</a>
+          </nav>
+          <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false">
+            <span class="nav-toggle__icon" aria-hidden="true"></span>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-hero admin-hero">
+          <div class="container page-hero__grid">
+            <div class="section-heading section-heading--left">
+              <p class="eyebrow">Operations</p>
+              <h1 class="page-title">Event Management</h1>
+              <p>
+                Plan sessions, manage rosters, track attendance and revenue, and trigger comms across
+                every Triangulate event in the campaign.
+              </p>
+            </div>
+            <div class="page-hero__card admin-status-card" id="admin-status-card">
+              <p class="panel-label">Access</p>
+              <h3>Admin login required</h3>
+              <p id="admin-status-copy">Sign in with an approved admin email to open the portal.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <div class="container">
+            <!-- ─── Login panel ───────────────────────────────────────── -->
+            <section class="admin-login-panel" id="admin-login-panel">
+              <div>
+                <p class="panel-label">Approved admins</p>
+                <h2>Sign in to manage events</h2>
+                <p>
+                  Magic-link auth. Allowlist is stored in <code>admin_users</code> on the live-site
+                  Supabase project.
+                </p>
+              </div>
+              <form class="admin-login-form" id="admin-login-form">
+                <label class="contact-field">
+                  <span>Email</span>
+                  <input id="admin-email" type="email" value="triangulate.game@gmail.com" autocomplete="email" required />
+                </label>
+                <button class="button button--primary" type="submit">Send login link</button>
+                <p class="admin-inline-status" id="admin-login-status" aria-live="polite"></p>
+              </form>
+            </section>
+
+            <!-- ─── Dashboard root ───────────────────────────────────── -->
+            <section class="admin-dashboard event-admin" id="admin-dashboard" hidden>
+              <!-- Tabs -->
+              <nav class="event-admin__tabs" id="event-admin-tabs" role="tablist">
+                <button type="button" class="event-admin__tab is-active" role="tab" data-tab="dashboard">Dashboard</button>
+                <button type="button" class="event-admin__tab" role="tab" data-tab="events">Events</button>
+                <button type="button" class="event-admin__tab" role="tab" data-tab="participants">Participants</button>
+                <button type="button" class="event-admin__tab" role="tab" data-tab="teams">Teams</button>
+                <button type="button" class="event-admin__tab" role="tab" data-tab="comms">Comms</button>
+                <button type="button" class="event-admin__tab" role="tab" data-tab="reports">Reports</button>
+                <button type="button" class="event-admin__tab" role="tab" data-tab="audit">Audit</button>
+              </nav>
+
+              <div class="event-admin__toolbar">
+                <p class="admin-inline-status" id="event-admin-status" aria-live="polite"></p>
+                <div class="event-admin__toolbar-actions">
+                  <button class="button button--secondary" type="button" id="event-admin-refresh">Refresh</button>
+                  <button class="button button--ghost" type="button" id="event-admin-sign-out">Sign out</button>
+                </div>
+              </div>
+
+              <!-- ─── Dashboard tab ─────────────────────────────────── -->
+              <section class="event-admin__panel is-active" data-panel="dashboard" id="event-admin-panel-dashboard">
+                <div class="event-kpi-grid" id="event-kpi-grid"></div>
+
+                <div class="event-admin__row">
+                  <div class="event-admin__card event-admin__card--wide">
+                    <header class="event-admin__card-head">
+                      <div>
+                        <p class="panel-label">Upcoming 14 days</p>
+                        <h3>Schedule timeline</h3>
+                      </div>
+                      <div class="event-admin__legend">
+                        <span class="event-pill event-pill--scheduled">scheduled</span>
+                        <span class="event-pill event-pill--live">live</span>
+                        <span class="event-pill event-pill--postponed">postponed</span>
+                      </div>
+                    </header>
+                    <div class="event-timeline" id="event-timeline"></div>
+                  </div>
+                </div>
+
+                <div class="event-admin__row event-admin__row--two">
+                  <div class="event-admin__card">
+                    <header class="event-admin__card-head">
+                      <div>
+                        <p class="panel-label">Recent activity</p>
+                        <h3>Last 10 actions</h3>
+                      </div>
+                    </header>
+                    <ul class="event-activity-list" id="event-activity-list"></ul>
+                  </div>
+                  <div class="event-admin__card">
+                    <header class="event-admin__card-head">
+                      <div>
+                        <p class="panel-label">Capacity overview</p>
+                        <h3>Top 6 sessions by fill</h3>
+                      </div>
+                    </header>
+                    <ul class="event-capacity-list" id="event-capacity-list"></ul>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ─── Events tab ────────────────────────────────────── -->
+              <section class="event-admin__panel" data-panel="events" id="event-admin-panel-events" hidden>
+                <header class="event-admin__panel-head">
+                  <div>
+                    <p class="panel-label">All events</p>
+                    <h3 id="event-list-summary">Loading events…</h3>
+                  </div>
+                  <div class="event-admin__panel-actions">
+                    <select id="event-filter-status" class="event-select">
+                      <option value="">All statuses</option>
+                      <option value="draft">Draft</option>
+                      <option value="scheduled">Scheduled</option>
+                      <option value="live">Live</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                      <option value="postponed">Postponed</option>
+                    </select>
+                    <select id="event-filter-city" class="event-select">
+                      <option value="">All cities</option>
+                    </select>
+                    <button class="button button--primary" type="button" id="event-new">+ New event</button>
+                  </div>
+                </header>
+                <div class="event-table-wrap">
+                  <table class="event-table" id="event-table">
+                    <thead>
+                      <tr>
+                        <th>When</th>
+                        <th>Event</th>
+                        <th>City / venue</th>
+                        <th>Status</th>
+                        <th>Cohort</th>
+                        <th>Capacity</th>
+                        <th>Revenue</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="event-table-body"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- ─── Participants tab ──────────────────────────────── -->
+              <section class="event-admin__panel" data-panel="participants" id="event-admin-panel-participants" hidden>
+                <header class="event-admin__panel-head">
+                  <div>
+                    <p class="panel-label">People</p>
+                    <h3 id="participant-summary">Loading participants…</h3>
+                  </div>
+                  <div class="event-admin__panel-actions">
+                    <input type="search" id="participant-search" placeholder="Search name, email, city…" class="event-input" />
+                    <select id="participant-filter-segment" class="event-select">
+                      <option value="">All segments</option>
+                      <option value="player">Player</option>
+                      <option value="coach">Coach</option>
+                      <option value="parent">Parent</option>
+                      <option value="observer">Observer</option>
+                      <option value="press">Press</option>
+                      <option value="partner">Partner</option>
+                      <option value="staff">Staff</option>
+                    </select>
+                    <button class="button button--secondary" type="button" id="participant-export">Export CSV</button>
+                  </div>
+                </header>
+                <div class="event-table-wrap">
+                  <table class="event-table" id="participant-table">
+                    <thead>
+                      <tr>
+                        <th><input type="checkbox" id="participant-select-all" /></th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>City</th>
+                        <th>Segment</th>
+                        <th>Cohort</th>
+                        <th>Source</th>
+                        <th class="event-table__num">Attended</th>
+                        <th class="event-table__num">No-shows</th>
+                        <th class="event-table__num">LTV</th>
+                        <th>Last seen</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="participant-table-body"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- ─── Teams tab ─────────────────────────────────────── -->
+              <section class="event-admin__panel" data-panel="teams" id="event-admin-panel-teams" hidden>
+                <header class="event-admin__panel-head">
+                  <div>
+                    <p class="panel-label">Teams</p>
+                    <h3 id="teams-summary">Loading teams…</h3>
+                  </div>
+                </header>
+                <div class="event-teams-grid" id="event-teams-grid"></div>
+              </section>
+
+              <!-- ─── Comms tab ─────────────────────────────────────── -->
+              <section class="event-admin__panel" data-panel="comms" id="event-admin-panel-comms" hidden>
+                <header class="event-admin__panel-head">
+                  <div>
+                    <p class="panel-label">Communications</p>
+                    <h3 id="comms-summary">Loading comms log…</h3>
+                  </div>
+                  <div class="event-admin__panel-actions">
+                    <select id="comms-filter-channel" class="event-select">
+                      <option value="">All channels</option>
+                      <option value="email">Email</option>
+                      <option value="sms">SMS</option>
+                      <option value="push">Push</option>
+                    </select>
+                    <select id="comms-filter-status" class="event-select">
+                      <option value="">All statuses</option>
+                      <option value="queued">Queued</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="opened">Opened</option>
+                      <option value="clicked">Clicked</option>
+                      <option value="failed">Failed</option>
+                      <option value="bounced">Bounced</option>
+                    </select>
+                  </div>
+                </header>
+                <div class="event-table-wrap">
+                  <table class="event-table">
+                    <thead>
+                      <tr>
+                        <th>Sent</th>
+                        <th>Channel</th>
+                        <th>Subject</th>
+                        <th>Recipient</th>
+                        <th>Event</th>
+                        <th>Status</th>
+                        <th>Template</th>
+                      </tr>
+                    </thead>
+                    <tbody id="comms-table-body"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- ─── Reports tab ───────────────────────────────────── -->
+              <section class="event-admin__panel" data-panel="reports" id="event-admin-panel-reports" hidden>
+                <div class="event-kpi-grid" id="reports-kpi-grid"></div>
+
+                <div class="event-admin__row event-admin__row--two">
+                  <div class="event-admin__card">
+                    <header class="event-admin__card-head">
+                      <div>
+                        <p class="panel-label">Funnel — Mixpanel</p>
+                        <h3>Waitlist → registered → attended</h3>
+                      </div>
+                      <span id="mixpanel-status" class="event-data-tag">connecting…</span>
+                    </header>
+                    <div class="event-funnel" id="mixpanel-funnel"></div>
+                  </div>
+
+                  <div class="event-admin__card">
+                    <header class="event-admin__card-head">
+                      <div>
+                        <p class="panel-label">CRM — Attio</p>
+                        <h3>Linked records</h3>
+                      </div>
+                      <span id="attio-status" class="event-data-tag">connecting…</span>
+                    </header>
+                    <ul class="event-attio-list" id="attio-list"></ul>
+                  </div>
+                </div>
+
+                <div class="event-admin__card">
+                  <header class="event-admin__card-head">
+                    <div>
+                      <p class="panel-label">Attendance &amp; feedback</p>
+                      <h3>Per-event performance (last 90 days)</h3>
+                    </div>
+                  </header>
+                  <div class="event-table-wrap">
+                    <table class="event-table">
+                      <thead>
+                        <tr>
+                          <th>Event</th>
+                          <th>Date</th>
+                          <th class="event-table__num">Registered</th>
+                          <th class="event-table__num">Attended</th>
+                          <th class="event-table__num">No-show %</th>
+                          <th class="event-table__num">NPS</th>
+                          <th class="event-table__num">Avg ★</th>
+                          <th class="event-table__num">Would return</th>
+                        </tr>
+                      </thead>
+                      <tbody id="reports-table-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ─── Audit tab ─────────────────────────────────────── -->
+              <section class="event-admin__panel" data-panel="audit" id="event-admin-panel-audit" hidden>
+                <header class="event-admin__panel-head">
+                  <div>
+                    <p class="panel-label">Audit log</p>
+                    <h3 id="audit-summary">Loading admin actions…</h3>
+                  </div>
+                </header>
+                <div class="event-table-wrap">
+                  <table class="event-table">
+                    <thead>
+                      <tr>
+                        <th>When</th>
+                        <th>Admin</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th>Payload</th>
+                      </tr>
+                    </thead>
+                    <tbody id="audit-table-body"></tbody>
+                  </table>
+                </div>
+              </section>
+            </section>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer-shell">
+          <div>
+            <a class="brand brand--footer" href="./index.html">
+              <img src="./assets/app/icon.png" alt="" width="30" height="30" />
+              <span>Triangulate</span>
+            </a>
+            <p class="footer-copy">Outdoor team play built around movement, shape, and smart decisions.</p>
+          </div>
+          <div class="footer-links">
+            <a href="./legal/2026-05-03/privacy-policy.html">Privacy policy</a>
+            <a href="./legal/2026-05-03/terms-of-service.html">Terms of Service</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ─── Event detail drawer ─────────────────────────────────────── -->
+    <div class="event-drawer" id="event-drawer" hidden>
+      <div class="event-drawer__scrim" data-close-drawer></div>
+      <aside class="event-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="event-drawer-title">
+        <header class="event-drawer__head">
+          <div>
+            <p class="panel-label" id="event-drawer-eyebrow">Event</p>
+            <h2 id="event-drawer-title">Event detail</h2>
+            <p id="event-drawer-meta" class="event-drawer__meta"></p>
+          </div>
+          <button class="button button--ghost" type="button" data-close-drawer aria-label="Close">×</button>
+        </header>
+        <div class="event-drawer__body" id="event-drawer-body"></div>
+      </aside>
+    </div>
+
+    <!-- ─── New event modal ─────────────────────────────────────────── -->
+    <div class="event-modal" id="event-modal" hidden>
+      <div class="event-modal__scrim" data-close-modal></div>
+      <form class="event-modal__panel" id="event-modal-form" novalidate>
+        <header class="event-modal__head">
+          <div>
+            <p class="panel-label">New event</p>
+            <h2 id="event-modal-title">Create event</h2>
+          </div>
+          <button class="button button--ghost" type="button" data-close-modal aria-label="Close">×</button>
+        </header>
+        <div class="event-modal__body">
+          <label class="event-field">
+            <span>Name</span>
+            <input name="name" required maxlength="160" />
+          </label>
+          <label class="event-field">
+            <span>Description</span>
+            <textarea name="description" rows="3" maxlength="800"></textarea>
+          </label>
+          <div class="event-field-row">
+            <label class="event-field">
+              <span>Type</span>
+              <select name="event_type">
+                <option value="session">Session</option>
+                <option value="tournament">Tournament</option>
+                <option value="open_day">Open day</option>
+                <option value="training">Training</option>
+                <option value="partner">Partner</option>
+                <option value="press">Press</option>
+              </select>
+            </label>
+            <label class="event-field">
+              <span>Status</span>
+              <select name="status">
+                <option value="draft">Draft</option>
+                <option value="scheduled" selected>Scheduled</option>
+                <option value="live">Live</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="postponed">Postponed</option>
+              </select>
+            </label>
+            <label class="event-field">
+              <span>Cohort</span>
+              <select name="cohort">
+                <option value="">—</option>
+                <option value="A">A (13–17)</option>
+                <option value="B" selected>B (18–30)</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </label>
+          </div>
+          <div class="event-field-row">
+            <label class="event-field">
+              <span>Starts at</span>
+              <input name="starts_at" type="datetime-local" required />
+            </label>
+            <label class="event-field">
+              <span>Ends at</span>
+              <input name="ends_at" type="datetime-local" required />
+            </label>
+          </div>
+          <div class="event-field-row">
+            <label class="event-field">
+              <span>Venue</span>
+              <select name="venue_id" id="event-modal-venue">
+                <option value="">—</option>
+              </select>
+            </label>
+            <label class="event-field">
+              <span>City</span>
+              <input name="city" maxlength="80" />
+            </label>
+          </div>
+          <div class="event-field-row">
+            <label class="event-field">
+              <span>Capacity</span>
+              <input name="capacity" type="number" min="3" max="200" value="24" />
+            </label>
+            <label class="event-field">
+              <span>Waitlist cap</span>
+              <input name="waitlist_capacity" type="number" min="0" max="100" value="8" />
+            </label>
+            <label class="event-field">
+              <span>Price (£)</span>
+              <input name="price_pounds" type="number" min="0" max="500" step="0.5" value="0" />
+            </label>
+          </div>
+          <p class="admin-inline-status" id="event-modal-status" aria-live="polite"></p>
+        </div>
+        <footer class="event-modal__foot">
+          <button type="button" class="button button--ghost" data-close-modal>Cancel</button>
+          <button type="submit" class="button button--primary" id="event-modal-submit">Create event</button>
+        </footer>
+      </form>
+    </div>
+
+    <script type="module" src="./scripts/admin-events.js?v=202605191400"></script>
+    <script src="./scripts/nav.js?v=1776436676" defer></script>
+  </body>
+</html>
