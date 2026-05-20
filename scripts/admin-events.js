@@ -328,9 +328,6 @@ function renderDashboard() {
   const noShows = state.registrations.filter((r) => r.status === "no_show").length;
   const attendanceRate = totalAttended + noShows > 0
     ? Math.round((100 * totalAttended) / (totalAttended + noShows)) : 0;
-  const revenuePence = state.registrations
-    .filter((r) => r.payment_status === "paid")
-    .reduce((sum, r) => sum + (r.payment_pence || 0), 0);
   const avgCapacity = state.kpis.length
     ? Math.round(state.kpis.reduce((s, k) => s + (k.capacity_pct || 0), 0) / state.kpis.length)
     : 0;
@@ -347,7 +344,6 @@ function renderDashboard() {
     { label: "Attended", value: totalAttended.toLocaleString(), sub: `${attendanceRate}% attendance rate` },
     { label: "Registered (active)", value: totalRegistered.toLocaleString(), sub: "open + completed events" },
     { label: "Avg fill", value: avgCapacity + "%", sub: "capacity across all events", tone: avgCapacity > 80 ? "warn" : avgCapacity > 50 ? "ok" : "muted" },
-    { label: "Revenue (paid)", value: fmtMoney(revenuePence), sub: "lifetime, all events" },
     { label: "NPS", value: isNaN(nps) ? "—" : nps, sub: `${npsScores.length} responses`, tone: nps >= 50 ? "ok" : nps >= 0 ? "warn" : "bad" },
   ];
 
@@ -500,7 +496,6 @@ function renderEvents() {
           </div>
           <p class="event-table__sub">${kpi.registered_count || 0}/${e.capacity} · ${fill}%</p>
         </td>
-        <td class="event-table__num">${fmtMoney(kpi.revenue_pence || 0)}</td>
         <td class="event-table__actions">
           <button class="button button--quiet button--small" data-open-event="${escapeHtml(e.id)}">View</button>
         </td>
@@ -583,11 +578,10 @@ function openEvent(eventId) {
         <table class="event-table event-table--compact">
           <thead>
             <tr>
-              <th>Name</th>
+              <th>Username</th>
               <th>Status</th>
               <th>Team</th>
               <th>Position</th>
-              <th>Payment</th>
               <th>Channel</th>
               <th></th>
             </tr>
@@ -668,10 +662,6 @@ function renderRosterRow(r, teams) {
         ${team ? `<span class="event-team-chip event-team-chip--${team.colour}">${escapeHtml(team.name)}</span>` : "—"}
       </td>
       <td>${r.position_in_triangle ? `#${r.position_in_triangle}` : "—"}</td>
-      <td>
-        <span class="event-pill event-pill--${r.payment_status === "paid" ? "ok" : "muted"}">${escapeHtml(r.payment_status)}</span>
-        ${r.payment_pence ? ` ${fmtMoney(r.payment_pence)}` : ""}
-      </td>
       <td>${escapeHtml(r.channel || "—")}</td>
       <td><button class="event-link" data-open-participant="${escapeHtml(r.participant_id)}">profile</button></td>
     </tr>
@@ -728,11 +718,10 @@ function renderParticipants() {
       <td>${fmtCohort(p.cohort)}</td>
       <td class="event-table__num">${p.total_events_attended || 0}</td>
       <td class="event-table__num">${p.total_no_shows || 0}</td>
-      <td class="event-table__num">${fmtMoney(p.lifetime_value_pence || 0)}</td>
       <td>${fmtRelative(p.last_seen_at)}</td>
       <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">open</button></td>
     </tr>
-  `).join("") || '<tr><td colspan="9" class="event-empty">No players match.</td></tr>';
+  `).join("") || '<tr><td colspan="8" class="event-empty">No players match.</td></tr>';
 }
 
 function openParticipant(participantId) {
@@ -755,19 +744,13 @@ function openParticipant(participantId) {
         <p class="event-kpi__sub">${p.total_no_shows || 0} no-shows</p>
       </div>
       <div class="event-kpi event-kpi--neutral">
-        <p class="event-kpi__label">LTV</p>
-        <p class="event-kpi__value">${fmtMoney(p.lifetime_value_pence || 0)}</p>
-        <p class="event-kpi__sub">paid events</p>
-      </div>
-      <div class="event-kpi event-kpi--neutral">
-        <p class="event-kpi__label">Source</p>
-        <p class="event-kpi__value" style="font-size: 1.4rem">${escapeHtml(p.source || "—")}</p>
-        <p class="event-kpi__sub">first seen ${fmtRelative(p.first_seen_at)}</p>
+        <p class="event-kpi__label">First seen</p>
+        <p class="event-kpi__value" style="font-size: 1.4rem">${fmtRelative(p.first_seen_at)}</p>
+        <p class="event-kpi__sub">last seen ${fmtRelative(p.last_seen_at)}</p>
       </div>
       <div class="event-kpi event-kpi--neutral">
         <p class="event-kpi__label">Consent</p>
         <p class="event-kpi__value" style="font-size: 1rem">
-          ${p.consent_marketing ? "📧" : "·"} marketing<br>
           ${p.consent_photo ? "📷" : "·"} photo
         </p>
         <p class="event-kpi__sub">${p.is_blocked ? "BLOCKED" : "active"}</p>
@@ -1185,12 +1168,9 @@ function exportParticipantsCsv() {
     selected.map((p) => ({
       username: p.display_name,
       city: p.city,
-      segment: p.segment,
-      cohort: p.cohort,
-      source: p.source,
+      age_group: fmtCohort(p.cohort),
       total_events_attended: p.total_events_attended,
       total_no_shows: p.total_no_shows,
-      lifetime_value_pence: p.lifetime_value_pence,
       last_seen_at: p.last_seen_at,
     })),
     `triangulate-participants-${new Date().toISOString().slice(0, 10)}.csv`
@@ -1211,8 +1191,6 @@ function exportEventRoster(eventId) {
       status: r.status,
       team_id: r.team_id || "",
       position_in_triangle: r.position_in_triangle || "",
-      payment_status: r.payment_status,
-      payment_pence: r.payment_pence,
       registered_at: r.registered_at,
       checked_in_at: r.checked_in_at,
       channel: r.channel,
@@ -1266,7 +1244,6 @@ async function handleModalSubmit(ev) {
     city: fd.get("city") || null,
     capacity: Number(fd.get("capacity")) || 24,
     waitlist_capacity: Number(fd.get("waitlist_capacity")) || 8,
-    price_pence: Math.round(Number(fd.get("price_pounds") || 0) * 100),
     created_by_email: state.authedEmail,
   };
   $("event-modal-submit").disabled = true;
