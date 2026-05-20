@@ -8,6 +8,18 @@ const LINK_SENT_KEY = "triangulate_event_admin_last_link";
 // this point a re-send would actually go through, so we let the user retry.
 const LINK_COOLDOWN_MS = 60_000;
 
+// Client-side allowlist for the magic-link send. Mirrors rows in the
+// admin_users table so non-admins don't trigger pointless OTP emails.
+// The DB-level RLS via is_admin_user() is the real security boundary —
+// this list is purely a UX gate to short-circuit unauthorised sends.
+const ADMIN_EMAIL_ALLOWLIST = [
+  "triangulate.game@gmail.com",
+];
+
+function isAdminEmail(email) {
+  return ADMIN_EMAIL_ALLOWLIST.includes((email || "").trim().toLowerCase());
+}
+
 function rememberLinkSent(email) {
   try {
     localStorage.setItem(LINK_SENT_KEY, JSON.stringify({ email, at: Date.now() }));
@@ -1429,6 +1441,10 @@ function bindFixedHandlers() {
     ev.preventDefault();
     const email = els.email.value.trim().toLowerCase();
     if (!email) return;
+    if (!isAdminEmail(email)) {
+      setLoginStatus("That email isn't authorised for the admin portal.", "error");
+      return;
+    }
     if (pendingLinkFor(email)) {
       applyPendingState();
       return;
