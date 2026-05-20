@@ -352,13 +352,18 @@ function renderDashboard() {
 
 function pendingRegistrations() {
   // Registrations awaiting planner approval are status='registered' on
-  // an event that hasn't already completed/cancelled. Sorted oldest-first
-  // so the planner clears the queue from the top.
+  // an event that is still ahead of us. Rule (matches mobile + site):
+  // if the event has passed (ends_at < now, or terminal status) any
+  // still-unapproved players are auto-cleared from the queue.
+  const now = Date.now();
   return state.registrations
     .filter((r) => r.status === "registered")
     .filter((r) => {
       const e = state.events.find((x) => x.id === r.event_id);
-      return e && ["scheduled", "live"].includes(e.status);
+      if (!e) return false;
+      if (["completed", "cancelled", "draft", "postponed"].includes(e.status)) return false;
+      if (e.ends_at && new Date(e.ends_at).getTime() < now) return false;
+      return true;
     })
     .sort((a, b) => new Date(a.registered_at) - new Date(b.registered_at));
 }
