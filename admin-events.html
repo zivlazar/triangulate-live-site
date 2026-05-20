@@ -107,6 +107,19 @@
                   </div>
                 </div>
 
+                <div class="event-admin__row">
+                  <div class="event-admin__card event-admin__card--wide">
+                    <header class="event-admin__card-head">
+                      <div>
+                        <p class="panel-label">Pending approvals</p>
+                        <h3 id="pending-approvals-title">Players awaiting approval</h3>
+                      </div>
+                      <span id="pending-approvals-count" class="event-pill event-pill--warn">0</span>
+                    </header>
+                    <ul class="event-pending-list" id="event-pending-list"></ul>
+                  </div>
+                </div>
+
                 <div class="event-admin__row event-admin__row--two">
                   <div class="event-admin__card">
                     <header class="event-admin__card-head">
@@ -160,7 +173,6 @@
                         <th>Event</th>
                         <th>City / venue</th>
                         <th>Status</th>
-                        <th>Age group</th>
                         <th>Capacity</th>
                         <th></th>
                       </tr>
@@ -179,11 +191,6 @@
                   </div>
                   <div class="event-admin__panel-actions">
                     <input type="search" id="participant-search" placeholder="Search username or city…" class="event-input" />
-                    <select id="participant-filter-cohort" class="event-select">
-                      <option value="">All age groups</option>
-                      <option value="A">13–17</option>
-                      <option value="B">18–30</option>
-                    </select>
                     <button class="button button--secondary" type="button" id="participant-export">Export CSV</button>
                   </div>
                 </header>
@@ -194,7 +201,6 @@
                         <th><input type="checkbox" id="participant-select-all" /></th>
                         <th>Username</th>
                         <th>City</th>
-                        <th>Age group</th>
                         <th class="event-table__num">Attended</th>
                         <th class="event-table__num">No-shows</th>
                         <th>Last seen</th>
@@ -417,15 +423,6 @@
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
                 <option value="postponed">Postponed</option>
-              </select>
-            </label>
-            <label class="event-field">
-              <span>Cohort</span>
-              <select name="cohort">
-                <option value="">—</option>
-                <option value="A">A (13–17)</option>
-                <option value="B" selected>B (18–30)</option>
-                <option value="mixed">Mixed</option>
               </select>
             </label>
           </div>

@@ -52,7 +52,6 @@ const state = {
     eventStatus: "",
     eventCity: "",
     participantSearch: "",
-    participantCohort: "",
     commsChannel: "",
     commsStatus: "",
   },
@@ -96,16 +95,6 @@ function fmtDateShort(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleString("en-GB", { day: "2-digit", month: "short" });
-}
-
-function fmtCohort(c) {
-  // Campaign cohorts map to age groups: A = 13–17 (teens, Phase 2),
-  // B = 18–30 (young adults, Phase 1). Surface the age range directly
-  // so admins don't need to remember the A/B legend.
-  if (c === "A") return "13–17";
-  if (c === "B") return "18–30";
-  if (c === "mixed") return "13–30";
-  return "—";
 }
 
 function fmtRelative(iso) {
@@ -356,8 +345,77 @@ function renderDashboard() {
   `).join("");
 
   renderTimeline();
+  renderPendingApprovals();
   renderActivity();
   renderCapacityList();
+}
+
+function pendingRegistrations() {
+  // Registrations awaiting planner approval are status='registered' on
+  // an event that hasn't already completed/cancelled. Sorted oldest-first
+  // so the planner clears the queue from the top.
+  return state.registrations
+    .filter((r) => r.status === "registered")
+    .filter((r) => {
+      const e = state.events.find((x) => x.id === r.event_id);
+      return e && ["scheduled", "live"].includes(e.status);
+    })
+    .sort((a, b) => new Date(a.registered_at) - new Date(b.registered_at));
+}
+
+function renderPendingApprovals() {
+  const items = pendingRegistrations();
+  const countEl = $("pending-approvals-count");
+  if (countEl) {
+    countEl.textContent = String(items.length);
+    countEl.classList.toggle("event-pill--warn", items.length > 0);
+    countEl.classList.toggle("event-pill--muted", items.length === 0);
+  }
+  const list = $("event-pending-list");
+  if (!list) return;
+  if (!items.length) {
+    list.innerHTML = '<li class="event-empty">No players awaiting approval.</li>';
+    return;
+  }
+  list.innerHTML = items.slice(0, 20).map((r) => {
+    const p = state.participants.find((x) => x.id === r.participant_id);
+    const e = state.events.find((x) => x.id === r.event_id);
+    return `
+      <li class="event-pending-row" data-reg-id="${escapeHtml(r.id)}">
+        <div class="event-pending-row__who">
+          <button class="event-link" data-open-participant="${escapeHtml(r.participant_id)}">${escapeHtml(p?.display_name || "—")}</button>
+          <span class="event-pending-row__when">requested ${fmtRelative(r.registered_at)}</span>
+        </div>
+        <div class="event-pending-row__event">
+          <button class="event-link" data-open-event="${escapeHtml(r.event_id)}">${escapeHtml(e?.name || "—")}</button>
+          <span class="event-table__sub">${escapeHtml(e?.city || "—")} · ${fmtDateShort(e?.starts_at)}</span>
+        </div>
+        <div class="event-pending-row__actions">
+          <button class="button button--primary button--small" data-approval-action="approve" data-reg-id="${escapeHtml(r.id)}">Approve</button>
+          <button class="button button--quiet button--small" data-approval-action="decline" data-reg-id="${escapeHtml(r.id)}">Decline</button>
+        </div>
+      </li>
+    `;
+  }).join("");
+}
+
+async function handleApprovalAction(action, regId) {
+  const reg = state.registrations.find((r) => r.id === regId);
+  if (!reg) return;
+  const patch = action === "approve"
+    ? { status: "confirmed", confirmed_at: new Date().toISOString() }
+    : { status: "cancelled", cancelled_at: new Date().toISOString() };
+  try {
+    await patchRegistration(regId, patch);
+    if (state.activeTab === "dashboard") renderPendingApprovals();
+    if (!$("event-drawer").hidden) {
+      const eventId = reg.event_id;
+      openEvent(eventId);
+    }
+    setDashboardStatus(action === "approve" ? "Player approved." : "Registration declined.");
+  } catch (err) {
+    setDashboardStatus(err.message || "Could not update registration.", "error");
+  }
 }
 
 function renderTimeline() {
@@ -489,7 +547,6 @@ function renderEvents() {
         </td>
         <td>${escapeHtml(e.city || "—")}</td>
         <td><span class="event-pill event-pill--${e.status}">${escapeHtml(e.status)}</span></td>
-        <td>${fmtCohort(e.cohort)}</td>
         <td>
           <div class="event-capacity-bar event-capacity-bar--${fillTone}" title="${fill}%">
             <div class="event-capacity-bar__fill" style="width: ${Math.min(100, fill)}%"></div>
@@ -516,7 +573,7 @@ function openEvent(eventId) {
   const comms = state.comms.filter((c) => c.event_id === eventId);
   const kpi = state.kpis.find((k) => k.event_id === eventId) || {};
 
-  $("event-drawer-eyebrow").textContent = e.event_type + (e.cohort ? ` · ${fmtCohort(e.cohort)}` : "");
+  $("event-drawer-eyebrow").textContent = e.event_type;
   $("event-drawer-title").textContent = e.name;
   $("event-drawer-meta").textContent =
     `${fmtDate(e.starts_at)} → ${fmtDate(e.ends_at)} · ${venue?.name || e.city || "—"}`;
@@ -567,7 +624,8 @@ function openEvent(eventId) {
         </div>
       </div>
       <div class="event-roster-counts">
-        <span class="event-pill event-pill--neutral">registered ${byStatus("registered").length}</span>
+        <span class="event-pill event-pill--warn">pending ${byStatus("registered").length}</span>
+        <span class="event-pill event-pill--ok">confirmed ${byStatus("confirmed").length}</span>
         <span class="event-pill event-pill--ok">checked_in ${byStatus("checked_in").length}</span>
         <span class="event-pill event-pill--ok">attended ${byStatus("attended").length}</span>
         <span class="event-pill event-pill--warn">no_show ${byStatus("no_show").length}</span>
@@ -653,9 +711,10 @@ function renderRosterRow(r, teams) {
         <p class="event-roster__name">${escapeHtml(p?.display_name || "—")}</p>
       </td>
       <td>
+        ${r.status === "registered" ? '<span class="event-pill event-pill--warn">pending approval</span>' : ""}
         <select class="event-select event-select--small" data-reg-status data-reg-id="${escapeHtml(r.id)}">
-          ${["registered","waitlisted","confirmed","checked_in","attended","no_show","cancelled","refunded"]
-            .map((s) => `<option value="${s}"${s === r.status ? " selected" : ""}>${s}</option>`).join("")}
+          ${["registered","waitlisted","confirmed","checked_in","attended","no_show","cancelled"]
+            .map((s) => `<option value="${s}"${s === r.status ? " selected" : ""}>${s === "registered" ? "pending" : s}</option>`).join("")}
         </select>
       </td>
       <td>
@@ -663,7 +722,12 @@ function renderRosterRow(r, teams) {
       </td>
       <td>${r.position_in_triangle ? `#${r.position_in_triangle}` : "—"}</td>
       <td>${escapeHtml(r.channel || "—")}</td>
-      <td><button class="event-link" data-open-participant="${escapeHtml(r.participant_id)}">profile</button></td>
+      <td>
+        ${r.status === "registered" ? `
+          <button class="button button--primary button--small" data-approval-action="approve" data-reg-id="${escapeHtml(r.id)}">Approve</button>
+          <button class="button button--quiet button--small" data-approval-action="decline" data-reg-id="${escapeHtml(r.id)}">Decline</button>
+        ` : `<button class="event-link" data-open-participant="${escapeHtml(r.participant_id)}">profile</button>`}
+      </td>
     </tr>
   `;
 }
@@ -697,9 +761,7 @@ function renderTeamCard(team, regs) {
 
 function renderParticipants() {
   const q = state.filters.participantSearch.toLowerCase();
-  const cohort = state.filters.participantCohort;
   const rows = state.participants.filter((p) => {
-    if (cohort && p.cohort !== cohort) return false;
     if (q) {
       const hay = `${p.display_name || ""} ${p.city || ""}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -715,13 +777,12 @@ function renderParticipants() {
       <td><input type="checkbox" data-participant-select value="${escapeHtml(p.id)}"${state.selectedParticipants.has(p.id) ? " checked" : ""} /></td>
       <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">${escapeHtml(p.display_name || "—")}</button></td>
       <td>${escapeHtml(p.city || "—")}</td>
-      <td>${fmtCohort(p.cohort)}</td>
       <td class="event-table__num">${p.total_events_attended || 0}</td>
       <td class="event-table__num">${p.total_no_shows || 0}</td>
       <td>${fmtRelative(p.last_seen_at)}</td>
       <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">open</button></td>
     </tr>
-  `).join("") || '<tr><td colspan="8" class="event-empty">No players match.</td></tr>';
+  `).join("") || '<tr><td colspan="7" class="event-empty">No players match.</td></tr>';
 }
 
 function openParticipant(participantId) {
@@ -734,7 +795,7 @@ function openParticipant(participantId) {
   $("event-drawer-eyebrow").textContent = `Participant · ${p.segment}`;
   $("event-drawer-title").textContent = p.display_name || "—";
   $("event-drawer-meta").textContent =
-    `${p.city || "—"}${p.cohort ? ` · ${fmtCohort(p.cohort)}` : ""}`;
+    `${p.city || "—"}`;
 
   $("event-drawer-body").innerHTML = `
     <div class="event-drawer__kpis">
@@ -1168,7 +1229,6 @@ function exportParticipantsCsv() {
     selected.map((p) => ({
       username: p.display_name,
       city: p.city,
-      age_group: fmtCohort(p.cohort),
       total_events_attended: p.total_events_attended,
       total_no_shows: p.total_no_shows,
       last_seen_at: p.last_seen_at,
@@ -1237,7 +1297,6 @@ async function handleModalSubmit(ev) {
     description: fd.get("description") || null,
     event_type: fd.get("event_type"),
     status: fd.get("status"),
-    cohort: fd.get("cohort") || null,
     starts_at: new Date(startsAt).toISOString(),
     ends_at: new Date(endsAt).toISOString(),
     venue_id: fd.get("venue_id") || null,
@@ -1348,6 +1407,12 @@ function bindEventDelegation() {
     if (action) {
       ev.preventDefault();
       handleEventAction(action.dataset.eventAction, action.dataset.eventId);
+      return;
+    }
+    const approval = t.closest?.("[data-approval-action]");
+    if (approval) {
+      ev.preventDefault();
+      handleApprovalAction(approval.dataset.approvalAction, approval.dataset.regId);
       return;
     }
     if (t.matches?.("[data-close-drawer]") || t.closest?.("[data-close-drawer]")) {
@@ -1468,10 +1533,6 @@ function bindFixedHandlers() {
 
   $("participant-search")?.addEventListener("input", (ev) => {
     state.filters.participantSearch = ev.target.value;
-    renderParticipants();
-  });
-  $("participant-filter-cohort")?.addEventListener("change", (ev) => {
-    state.filters.participantCohort = ev.target.value;
     renderParticipants();
   });
   $("participant-export")?.addEventListener("click", exportParticipantsCsv);

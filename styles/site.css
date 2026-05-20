@@ -3719,6 +3719,52 @@ body[data-page="events"] .events-grid--listing .event-card {
   background: rgba(21, 73, 143, 0.04);
 }
 
+.event-pending-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.event-pending-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.4fr) auto;
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.7rem 0.85rem;
+  background: rgba(244, 161, 0, 0.06);
+  border: 1.5px solid rgba(244, 161, 0, 0.25);
+  border-radius: 14px;
+}
+
+.event-pending-row__who,
+.event-pending-row__event {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.event-pending-row__when {
+  font-size: 0.74rem;
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+
+.event-pending-row__actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .event-pending-row {
+    grid-template-columns: 1fr;
+  }
+  .event-pending-row__actions {
+    justify-content: flex-start;
+  }
+}
+
 .event-capacity-row__name {
   margin: 0;
   font-weight: 800;
