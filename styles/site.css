@@ -4231,6 +4231,26 @@ body.event-drawer-open { overflow: hidden; }
   display: none !important;
 }
 
+.events-hero-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.events-hero-aside {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.4rem;
+}
+
+@media (max-width: 720px) {
+  .events-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .events-hero-aside {
+    justify-content: flex-start;
+  }
+}
+
 .event-modal__scrim {
   position: absolute;
   inset: 0;
