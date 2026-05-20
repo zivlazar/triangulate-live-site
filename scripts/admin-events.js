@@ -202,10 +202,26 @@ async function bridge(action, body = {}) {
     body: JSON.stringify({ action, ...body }),
   });
   const data = await res.json().catch(() => ({}));
+
+  // 403 means the bridge couldn't match our JWT to an admin row.
+  // Typically: token expired (24h TTL now), or the user's email is no
+  // longer on the live-site admin allowlist. Either way the session
+  // is dead — clear it, bounce back to the login screen, and surface
+  // a friendly explanation instead of the raw "Forbidden" string.
+  if (res.status === 403) {
+    handleExpiredSession();
+    throw new Error("Session expired — sign in again.");
+  }
   if (!res.ok || data.error) {
     throw new Error(data.error || `Bridge failed (${res.status})`);
   }
   return data;
+}
+
+function handleExpiredSession() {
+  try { sessionStorage.removeItem(ACCESS_TOKEN_KEY); } catch { /* ignore */ }
+  setAuthed("", "");
+  setLoginStatus("Session expired — sign in again.", "error");
 }
 
 // ─── Data loading ────────────────────────────────────────────────────────────
