@@ -150,15 +150,8 @@ function setAuthed(email, token) {
   state.authedEmail = email;
   state.accessToken = token;
   const ok = Boolean(email && token);
-  els.loginPanel.hidden = ok;
-  els.dashboard.hidden = !ok;
-  els.statusCard.classList.toggle("admin-status-card--ok", ok);
-  if (els.statusHeading) {
-    els.statusHeading.textContent = ok ? "Signed in" : "Admin login required";
-  }
-  els.statusCopy.textContent = ok
-    ? `Signed in as ${email}. All mutations are written to the live-site Supabase project under RLS.`
-    : "Sign in with an approved admin email to open the portal.";
+  if (els.loginPanel) els.loginPanel.hidden = ok;
+  if (els.dashboard) els.dashboard.hidden = !ok;
 }
 
 async function restoreSession() {
@@ -1414,9 +1407,6 @@ function cacheEls() {
     loginForm: $("admin-login-form"),
     loginStatus: $("admin-login-status"),
     dashboard: $("admin-dashboard"),
-    statusCard: $("admin-status-card"),
-    statusHeading: $("admin-status-heading"),
-    statusCopy: $("admin-status-copy"),
     dashboardStatus: $("event-admin-status"),
   });
 }
