@@ -3,6 +3,25 @@ import { SUPABASE_KEY, SUPABASE_URL } from "./site-config.js";
 
 const ACCESS_TOKEN_KEY = "triangulate_event_admin_access_token";
 const BRIDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-bridge`;
+const LINK_SENT_KEY = "triangulate_event_admin_last_link";
+// Matches Supabase Auth's default OTP rate-limit window (60s) — beyond
+// this point a re-send would actually go through, so we let the user retry.
+const LINK_COOLDOWN_MS = 60_000;
+
+function rememberLinkSent(email) {
+  try {
+    localStorage.setItem(LINK_SENT_KEY, JSON.stringify({ email, at: Date.now() }));
+  } catch { /* localStorage unavailable */ }
+}
+
+function pendingLinkFor(email) {
+  try {
+    const data = JSON.parse(localStorage.getItem(LINK_SENT_KEY) || "null");
+    if (!data || data.email !== email) return null;
+    if (Date.now() - data.at > LINK_COOLDOWN_MS) return null;
+    return data;
+  } catch { return null; }
+}
 
 const state = {
   authedEmail: "",
@@ -1394,17 +1413,48 @@ function cacheEls() {
 }
 
 function bindFixedHandlers() {
+  const submitBtn = els.loginForm?.querySelector('button[type="submit"]');
+  const defaultSubmitLabel = submitBtn?.textContent || "Send login link";
+
+  function applyPendingState() {
+    if (!submitBtn) return;
+    const current = (els.email?.value || "").trim().toLowerCase();
+    if (current && pendingLinkFor(current)) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitted";
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.textContent = defaultSubmitLabel;
+    }
+  }
+
+  els.email?.addEventListener("input", applyPendingState);
+  applyPendingState();
+
   els.loginForm?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     const email = els.email.value.trim().toLowerCase();
     if (!email) return;
-    setLoginStatus("Sending login link…");
+    if (pendingLinkFor(email)) {
+      applyPendingState();
+      return;
+    }
+    setLoginStatus("");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending…";
+    }
     try {
       await sendMagicLink(email);
-      setLoginStatus(`Link sent to ${email}. Check your inbox.`, "ok");
-    } catch (err) {
-      setLoginStatus(err.message || "Could not send login link.", "error");
+    } catch {
+      // Swallow upstream errors (rate-limit, transient network, etc.) —
+      // we always lock to "Submitted" so the user has a single, clean
+      // confirmation. They can try a different email or wait out the
+      // cooldown window if needed.
     }
+    rememberLinkSent(email);
+    if (submitBtn) submitBtn.textContent = "Submitted";
+    setLoginStatus("");
   });
 
   $("event-admin-sign-out")?.addEventListener("click", () => {
