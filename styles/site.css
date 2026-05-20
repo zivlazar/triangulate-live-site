@@ -4232,22 +4232,27 @@ body.event-drawer-open { overflow: hidden; }
 }
 
 .events-hero-grid {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.events-hero-grid > .section-heading {
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
 .events-hero-aside {
-  display: flex;
-  justify-content: flex-end;
+  flex: 0 0 auto;
+  margin-left: auto;
   padding-top: 0.4rem;
 }
 
 @media (max-width: 720px) {
-  .events-hero-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .events-hero-aside {
-    justify-content: flex-start;
+    margin-left: 0;
   }
 }
 
