@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Finishing Discord Connection</title>
+    <script>
+      const target = new URL("https://wnkbkgnydrmwgudbdqin.supabase.co/functions/v1/discord-linked-role");
+      target.searchParams.set("route", "callback");
+      const params = new URLSearchParams(window.location.search);
+      params.forEach((value, key) => target.searchParams.set(key, value));
+      window.location.replace(target.toString());
+    </script>
+  </head>
+  <body>
+    <p>Finishing your Discord connection...</p>
+    <p>
+      <a id="continue-link" href="https://wnkbkgnydrmwgudbdqin.supabase.co/functions/v1/discord-linked-role/callback">
+        Continue
+      </a>
+    </p>
+    <script>
+      const fallbackTarget = new URL("https://wnkbkgnydrmwgudbdqin.supabase.co/functions/v1/discord-linked-role");
+      fallbackTarget.searchParams.set("route", "callback");
+      const fallbackParams = new URLSearchParams(window.location.search);
+      fallbackParams.forEach((value, key) => fallbackTarget.searchParams.set(key, value));
+      document.getElementById("continue-link").href = fallbackTarget.toString();
+    </script>
+  </body>
+</html>
