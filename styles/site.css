@@ -4227,6 +4227,7 @@ body.event-drawer-open { overflow: hidden; }
 .event-modal[hidden],
 .event-drawer[hidden],
 .admin-dashboard[hidden],
+.admin-login-panel[hidden],
 .event-admin__panel[hidden] {
   display: none !important;
 }
