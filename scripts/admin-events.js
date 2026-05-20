@@ -371,6 +371,13 @@ function renderPendingApprovals() {
     countEl.classList.toggle("event-pill--warn", items.length > 0);
     countEl.classList.toggle("event-pill--muted", items.length === 0);
   }
+  const approveAllBtn = $("approve-all-pending");
+  if (approveAllBtn) {
+    approveAllBtn.disabled = items.length === 0;
+    approveAllBtn.textContent = items.length > 1
+      ? `Approve all (${items.length})`
+      : "Approve all";
+  }
   const list = $("event-pending-list");
   if (!list) return;
   if (!items.length) {
@@ -397,6 +404,53 @@ function renderPendingApprovals() {
       </li>
     `;
   }).join("");
+}
+
+async function approveAllPending() {
+  const items = pendingRegistrations();
+  if (!items.length) return;
+  if (!window.confirm(`Approve all ${items.length} player${items.length === 1 ? "" : "s"} awaiting approval?`)) return;
+
+  const btn = $("approve-all-pending");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Approving…";
+  }
+  const ids = items.map((r) => r.id);
+  const confirmedAt = new Date().toISOString();
+  try {
+    await rest(
+      `event_registrations?id=in.(${ids.join(",")})`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ status: "confirmed", confirmed_at: confirmedAt }),
+      },
+    );
+    // Mirror the change in local state so re-render is instant.
+    items.forEach((r) => {
+      const local = state.registrations.find((x) => x.id === r.id);
+      if (local) {
+        local.status = "confirmed";
+        local.confirmed_at = confirmedAt;
+      }
+    });
+    await logAudit("registration.bulk_approve", "event_registrations", null, {
+      registration_count: ids.length,
+    });
+    setDashboardStatus(`Approved ${ids.length} player${ids.length === 1 ? "" : "s"}.`);
+    renderPendingApprovals();
+    if (!$("event-drawer").hidden) {
+      // If a drawer is open, refresh its roster to reflect the bulk update.
+      const openedHeader = document.getElementById("event-drawer-title");
+      const openedEvent = state.events.find((e) =>
+        openedHeader && e.name === openedHeader.textContent,
+      );
+      if (openedEvent) openEvent(openedEvent.id);
+    }
+  } catch (err) {
+    setDashboardStatus(err.message || "Could not approve all pending players.", "error");
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function handleApprovalAction(action, regId) {
@@ -1516,6 +1570,8 @@ function bindFixedHandlers() {
   });
 
   $("event-admin-refresh")?.addEventListener("click", () => loadAllData());
+
+  $("approve-all-pending")?.addEventListener("click", approveAllPending);
 
   document.querySelectorAll(".event-admin__tab").forEach((btn) => {
     btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
