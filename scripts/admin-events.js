@@ -646,8 +646,7 @@ function renderRosterRow(r, teams) {
   return `
     <tr>
       <td>
-        <p class="event-roster__name">${escapeHtml(p?.full_name || "—")}</p>
-        <p class="event-table__sub">${escapeHtml(p?.email || "")}</p>
+        <p class="event-roster__name">${escapeHtml(p?.display_name || "—")}</p>
       </td>
       <td>
         <select class="event-select event-select--small" data-reg-status data-reg-id="${escapeHtml(r.id)}">
@@ -685,7 +684,7 @@ function renderTeamCard(team, regs) {
           return `
             <li class="event-team-slot${p ? " event-team-slot--filled" : ""}">
               <span class="event-team-slot__pos">#${pos}</span>
-              <span class="event-team-slot__name">${p ? escapeHtml(p.full_name || p.email) : "open"}</span>
+              <span class="event-team-slot__name">${p ? escapeHtml(p.display_name || "—") : "open"}</span>
             </li>
           `;
         }).join("")}
@@ -702,7 +701,7 @@ function renderParticipants() {
   const rows = state.participants.filter((p) => {
     if (seg && p.segment !== seg) return false;
     if (q) {
-      const hay = `${p.full_name || ""} ${p.email} ${p.city || ""}`.toLowerCase();
+      const hay = `${p.display_name || ""} ${p.city || ""}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -714,8 +713,7 @@ function renderParticipants() {
   $("participant-table-body").innerHTML = rows.slice(0, 200).map((p) => `
     <tr>
       <td><input type="checkbox" data-participant-select value="${escapeHtml(p.id)}"${state.selectedParticipants.has(p.id) ? " checked" : ""} /></td>
-      <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">${escapeHtml(p.full_name || "—")}</button></td>
-      <td>${escapeHtml(p.email)}</td>
+      <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">${escapeHtml(p.display_name || "—")}</button></td>
       <td>${escapeHtml(p.city || "—")}</td>
       <td><span class="event-pill event-pill--neutral">${escapeHtml(p.segment)}</span></td>
       <td>${escapeHtml(p.cohort || "—")}</td>
@@ -726,7 +724,7 @@ function renderParticipants() {
       <td>${fmtRelative(p.last_seen_at)}</td>
       <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">open</button></td>
     </tr>
-  `).join("") || '<tr><td colspan="12" class="event-empty">No participants match.</td></tr>';
+  `).join("") || '<tr><td colspan="11" class="event-empty">No participants match.</td></tr>';
 }
 
 function openParticipant(participantId) {
@@ -737,9 +735,9 @@ function openParticipant(participantId) {
   const feedback = state.feedback.filter((f) => f.participant_id === participantId);
 
   $("event-drawer-eyebrow").textContent = `Participant · ${p.segment}`;
-  $("event-drawer-title").textContent = p.full_name || p.email;
+  $("event-drawer-title").textContent = p.display_name || "—";
   $("event-drawer-meta").textContent =
-    `${p.email} · ${p.city || "—"}${p.cohort ? ` · cohort ${p.cohort}` : ""}`;
+    `${p.city || "—"}${p.cohort ? ` · cohort ${p.cohort}` : ""}`;
 
   $("event-drawer-body").innerHTML = `
     <div class="event-drawer__kpis">
@@ -883,7 +881,7 @@ function renderComms() {
         <td>${fmtRelative(c.sent_at || c.created_at)}</td>
         <td><span class="event-pill event-pill--neutral">${escapeHtml(c.channel)}</span></td>
         <td>${escapeHtml(c.subject || "—")}</td>
-        <td>${escapeHtml(p?.full_name || p?.email || "—")}</td>
+        <td>${escapeHtml(p?.display_name || "—")}</td>
         <td>${e ? `<button class="event-link" data-open-event="${escapeHtml(e.id)}">${escapeHtml(e.name)}</button>` : "—"}</td>
         <td><span class="event-pill event-pill--${["delivered","opened","clicked"].includes(c.status) ? "ok" : c.status === "failed" || c.status === "bounced" ? "warn" : "muted"}">${escapeHtml(c.status)}</span></td>
         <td><code>${escapeHtml(c.template_key || "—")}</code></td>
@@ -1025,8 +1023,7 @@ function mockAttio() {
     workspace: "triangulate",
     sample: state.participants.slice(0, 8).map((p) => ({
       person_id: p.attio_person_id || `mock-${p.id.slice(0, 8)}`,
-      email: p.email,
-      name: p.full_name,
+      username: p.display_name,
       segment: p.segment,
       status: ["target", "contacted", "replied", "active"][Math.floor(Math.random() * 4)],
     })),
@@ -1067,7 +1064,7 @@ function renderBridge() {
   if (at && $("attio-list")) {
     $("attio-list").innerHTML = (at.sample || []).map((p) => `
       <li class="event-attio-row">
-        <span class="event-attio-row__name">${escapeHtml(p.name || p.email)}</span>
+        <span class="event-attio-row__name">${escapeHtml(p.username || "—")}</span>
         <span class="event-pill event-pill--neutral">${escapeHtml(p.segment || "—")}</span>
         <span class="event-pill event-pill--ok">${escapeHtml(p.status || "—")}</span>
         <code class="event-attio-row__id">${escapeHtml(p.person_id)}</code>
@@ -1178,8 +1175,7 @@ function exportParticipantsCsv() {
     : state.participants;
   downloadCsv(
     selected.map((p) => ({
-      email: p.email,
-      full_name: p.full_name,
+      username: p.display_name,
       city: p.city,
       segment: p.segment,
       cohort: p.cohort,
@@ -1187,7 +1183,6 @@ function exportParticipantsCsv() {
       total_events_attended: p.total_events_attended,
       total_no_shows: p.total_no_shows,
       lifetime_value_pence: p.lifetime_value_pence,
-      consent_marketing: p.consent_marketing,
       last_seen_at: p.last_seen_at,
     })),
     `triangulate-participants-${new Date().toISOString().slice(0, 10)}.csv`
@@ -1203,9 +1198,7 @@ function exportEventRoster(eventId) {
     return {
       event_name: e?.name,
       event_starts_at: e?.starts_at,
-      participant_name: p?.full_name,
-      participant_email: p?.email,
-      participant_phone: p?.phone_number,
+      username: p?.display_name,
       participant_city: p?.city,
       status: r.status,
       team_id: r.team_id || "",
