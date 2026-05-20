@@ -1,5 +1,17 @@
 import { ANALYTICS_CONFIG } from "./site-config.js";
 
+// Defensive: if a Supabase magic-link redirect lands anywhere other than
+// /admin-events.html (e.g. Supabase falls back to the Site URL when the
+// allow-list match fails), forward the access-token fragment to the
+// admin portal so the sign-in completes cleanly.
+(function relayMagicLinkToAdmin() {
+  if (typeof window === "undefined") return;
+  const hash = window.location.hash || "";
+  if (!hash.includes("access_token=") || !hash.includes("type=magiclink")) return;
+  if (window.location.pathname.endsWith("/admin-events.html")) return;
+  window.location.replace("/admin-events.html" + hash);
+})();
+
 const ANALYTICS_CONSENT_KEY = "triangulate_analytics_consent";
 const WEB_VISITOR_KEY = "triangulate_web_visitor_id";
 const PLAYER_ID_KEY = "triangulate_player_id";
