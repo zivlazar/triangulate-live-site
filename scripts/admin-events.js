@@ -52,7 +52,7 @@ const state = {
     eventStatus: "",
     eventCity: "",
     participantSearch: "",
-    participantSegment: "",
+    participantCohort: "",
     commsChannel: "",
     commsStatus: "",
   },
@@ -96,6 +96,16 @@ function fmtDateShort(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
   return d.toLocaleString("en-GB", { day: "2-digit", month: "short" });
+}
+
+function fmtCohort(c) {
+  // Campaign cohorts map to age groups: A = 13–17 (teens, Phase 2),
+  // B = 18–30 (young adults, Phase 1). Surface the age range directly
+  // so admins don't need to remember the A/B legend.
+  if (c === "A") return "13–17";
+  if (c === "B") return "18–30";
+  if (c === "mixed") return "13–30";
+  return "—";
 }
 
 function fmtRelative(iso) {
@@ -483,7 +493,7 @@ function renderEvents() {
         </td>
         <td>${escapeHtml(e.city || "—")}</td>
         <td><span class="event-pill event-pill--${e.status}">${escapeHtml(e.status)}</span></td>
-        <td>${escapeHtml(e.cohort || "—")}</td>
+        <td>${fmtCohort(e.cohort)}</td>
         <td>
           <div class="event-capacity-bar event-capacity-bar--${fillTone}" title="${fill}%">
             <div class="event-capacity-bar__fill" style="width: ${Math.min(100, fill)}%"></div>
@@ -511,7 +521,7 @@ function openEvent(eventId) {
   const comms = state.comms.filter((c) => c.event_id === eventId);
   const kpi = state.kpis.find((k) => k.event_id === eventId) || {};
 
-  $("event-drawer-eyebrow").textContent = e.event_type + (e.cohort ? ` · cohort ${e.cohort}` : "");
+  $("event-drawer-eyebrow").textContent = e.event_type + (e.cohort ? ` · ${fmtCohort(e.cohort)}` : "");
   $("event-drawer-title").textContent = e.name;
   $("event-drawer-meta").textContent =
     `${fmtDate(e.starts_at)} → ${fmtDate(e.ends_at)} · ${venue?.name || e.city || "—"}`;
@@ -697,9 +707,9 @@ function renderTeamCard(team, regs) {
 
 function renderParticipants() {
   const q = state.filters.participantSearch.toLowerCase();
-  const seg = state.filters.participantSegment;
+  const cohort = state.filters.participantCohort;
   const rows = state.participants.filter((p) => {
-    if (seg && p.segment !== seg) return false;
+    if (cohort && p.cohort !== cohort) return false;
     if (q) {
       const hay = `${p.display_name || ""} ${p.city || ""}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -707,7 +717,7 @@ function renderParticipants() {
     return true;
   });
   $("participant-summary").textContent =
-    `${rows.length} participant${rows.length === 1 ? "" : "s"}` +
+    `${rows.length} player${rows.length === 1 ? "" : "s"}` +
     (state.selectedParticipants.size ? ` · ${state.selectedParticipants.size} selected` : "");
 
   $("participant-table-body").innerHTML = rows.slice(0, 200).map((p) => `
@@ -715,16 +725,14 @@ function renderParticipants() {
       <td><input type="checkbox" data-participant-select value="${escapeHtml(p.id)}"${state.selectedParticipants.has(p.id) ? " checked" : ""} /></td>
       <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">${escapeHtml(p.display_name || "—")}</button></td>
       <td>${escapeHtml(p.city || "—")}</td>
-      <td><span class="event-pill event-pill--neutral">${escapeHtml(p.segment)}</span></td>
-      <td>${escapeHtml(p.cohort || "—")}</td>
-      <td>${escapeHtml(p.source || "—")}</td>
+      <td>${fmtCohort(p.cohort)}</td>
       <td class="event-table__num">${p.total_events_attended || 0}</td>
       <td class="event-table__num">${p.total_no_shows || 0}</td>
       <td class="event-table__num">${fmtMoney(p.lifetime_value_pence || 0)}</td>
       <td>${fmtRelative(p.last_seen_at)}</td>
       <td><button class="event-link" data-open-participant="${escapeHtml(p.id)}">open</button></td>
     </tr>
-  `).join("") || '<tr><td colspan="11" class="event-empty">No participants match.</td></tr>';
+  `).join("") || '<tr><td colspan="9" class="event-empty">No players match.</td></tr>';
 }
 
 function openParticipant(participantId) {
@@ -737,7 +745,7 @@ function openParticipant(participantId) {
   $("event-drawer-eyebrow").textContent = `Participant · ${p.segment}`;
   $("event-drawer-title").textContent = p.display_name || "—";
   $("event-drawer-meta").textContent =
-    `${p.city || "—"}${p.cohort ? ` · cohort ${p.cohort}` : ""}`;
+    `${p.city || "—"}${p.cohort ? ` · ${fmtCohort(p.cohort)}` : ""}`;
 
   $("event-drawer-body").innerHTML = `
     <div class="event-drawer__kpis">
@@ -1485,8 +1493,8 @@ function bindFixedHandlers() {
     state.filters.participantSearch = ev.target.value;
     renderParticipants();
   });
-  $("participant-filter-segment")?.addEventListener("change", (ev) => {
-    state.filters.participantSegment = ev.target.value;
+  $("participant-filter-cohort")?.addEventListener("change", (ev) => {
+    state.filters.participantCohort = ev.target.value;
     renderParticipants();
   });
   $("participant-export")?.addEventListener("click", exportParticipantsCsv);

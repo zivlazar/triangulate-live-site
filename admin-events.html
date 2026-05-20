@@ -160,7 +160,7 @@
                         <th>Event</th>
                         <th>City / venue</th>
                         <th>Status</th>
-                        <th>Cohort</th>
+                        <th>Age group</th>
                         <th>Capacity</th>
                         <th>Revenue</th>
                         <th></th>
@@ -180,15 +180,10 @@
                   </div>
                   <div class="event-admin__panel-actions">
                     <input type="search" id="participant-search" placeholder="Search username or city…" class="event-input" />
-                    <select id="participant-filter-segment" class="event-select">
-                      <option value="">All segments</option>
-                      <option value="player">Player</option>
-                      <option value="coach">Coach</option>
-                      <option value="parent">Parent</option>
-                      <option value="observer">Observer</option>
-                      <option value="press">Press</option>
-                      <option value="partner">Partner</option>
-                      <option value="staff">Staff</option>
+                    <select id="participant-filter-cohort" class="event-select">
+                      <option value="">All age groups</option>
+                      <option value="A">13–17</option>
+                      <option value="B">18–30</option>
                     </select>
                     <button class="button button--secondary" type="button" id="participant-export">Export CSV</button>
                   </div>
@@ -200,9 +195,7 @@
                         <th><input type="checkbox" id="participant-select-all" /></th>
                         <th>Username</th>
                         <th>City</th>
-                        <th>Segment</th>
-                        <th>Cohort</th>
-                        <th>Source</th>
+                        <th>Age group</th>
                         <th class="event-table__num">Attended</th>
                         <th class="event-table__num">No-shows</th>
                         <th class="event-table__num">LTV</th>
