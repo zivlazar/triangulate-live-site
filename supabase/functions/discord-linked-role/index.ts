@@ -1,6 +1,6 @@
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 const DISCORD_AUTHORIZE_URL = "https://discord.com/oauth2/authorize";
-const DEFAULT_REDIRECT_URI = "https://triangulate.live/discord-oauth-callback/";
+const DEFAULT_REDIRECT_URI = "https://triangulate.live/discord-oauth-callback/index.html";
 const STATE_COOKIE = "tri_discord_state";
 
 function env(name: string, fallback = "") {
