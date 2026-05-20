@@ -1402,12 +1402,17 @@ function bindEventDelegation() {
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 
+// Fixed admin login email — UI has no email input; magic links always go
+// to this address. Other rows in admin_users (e.g. ziv1.lazar@gmail.com)
+// can still sign in by triggering the OTP flow directly, but the login
+// button on /admin-events.html is single-purpose.
+const FIXED_LOGIN_EMAIL = "triangulate.game@gmail.com";
+
 function cacheEls() {
   Object.assign(els, {
     loginPanel: $("admin-login-panel"),
     loginForm: $("admin-login-form"),
     loginStatus: $("admin-login-status"),
-    email: $("admin-email"),
     dashboard: $("admin-dashboard"),
     statusCard: $("admin-status-card"),
     statusHeading: $("admin-status-heading"),
@@ -1422,8 +1427,7 @@ function bindFixedHandlers() {
 
   function applyPendingState() {
     if (!submitBtn) return;
-    const current = (els.email?.value || "").trim().toLowerCase();
-    if (current && pendingLinkFor(current)) {
+    if (pendingLinkFor(FIXED_LOGIN_EMAIL)) {
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitted";
     } else {
@@ -1432,13 +1436,11 @@ function bindFixedHandlers() {
     }
   }
 
-  els.email?.addEventListener("input", applyPendingState);
   applyPendingState();
 
   els.loginForm?.addEventListener("submit", async (ev) => {
     ev.preventDefault();
-    const email = els.email.value.trim().toLowerCase();
-    if (!email) return;
+    const email = FIXED_LOGIN_EMAIL;
     if (pendingLinkFor(email)) {
       applyPendingState();
       return;
