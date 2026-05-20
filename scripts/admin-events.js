@@ -350,11 +350,15 @@ function renderDashboard() {
   renderCapacityList();
 }
 
+// Grace period after an event starts before unapproved registrations
+// auto-clear from the pending queue. Matches the mobile app + website
+// rule: "event passed = starts_at + 4 hours".
+const PENDING_GRACE_MS = 4 * 60 * 60 * 1000;
+
 function pendingRegistrations() {
   // Registrations awaiting planner approval are status='registered' on
-  // an event that is still ahead of us. Rule (matches mobile + site):
-  // if the event has passed (ends_at < now, or terminal status) any
-  // still-unapproved players are auto-cleared from the queue.
+  // an event that hasn't yet passed (starts_at + 4h still ahead) and
+  // isn't in a terminal status.
   const now = Date.now();
   return state.registrations
     .filter((r) => r.status === "registered")
@@ -362,7 +366,7 @@ function pendingRegistrations() {
       const e = state.events.find((x) => x.id === r.event_id);
       if (!e) return false;
       if (["completed", "cancelled", "draft", "postponed"].includes(e.status)) return false;
-      if (e.ends_at && new Date(e.ends_at).getTime() < now) return false;
+      if (e.starts_at && new Date(e.starts_at).getTime() + PENDING_GRACE_MS < now) return false;
       return true;
     })
     .sort((a, b) => new Date(a.registered_at) - new Date(b.registered_at));
