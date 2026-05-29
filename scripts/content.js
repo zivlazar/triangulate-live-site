@@ -11,18 +11,18 @@ export const heroVisualPrompts = {
 export const quickStartItems = [
   {
     icon: "01",
-    title: "Join what’s happening",
-    description: "Pick an event with real momentum and jump into a match that’s already coming together.",
+    title: "Join the action",
+    description: "Pick an event with real momentum or start your own. The energy is infectious, and the competition is fierce.",
   },
   {
     icon: "02",
     title: "Spread out fast",
-    description: "Once the match starts, teams move, space opens up, and the triangle starts to matter.",
+    description: "The moment the match starts, teams are on the move, space opens up, and your triangle becomes your weapon.",
   },
   {
     icon: "03",
     title: "Play it properly",
-    description: "Read the space, move together, and turn a simple setup into a sharp outdoor game.",
+    description: "Read the terrain, move as one, and turn a simple concept into a sharp, outdoor battle of wits and speed.",
   },
 ];
 
@@ -345,10 +345,10 @@ export const weeklyFeature = {
 
 export const audienceCards = [
   {
-    title: "Play with friends",
+    title: "Play with mates",
     description:
       "Turn a normal meet-up into an outdoor game with movement, teamwork, and the kind of chaos that makes people want another round.",
-    ctaLabel: "Play with friends",
+    ctaLabel: "Play with mates",
     href: "#final-cta",
     sceneClass: "friends",
   },
@@ -366,17 +366,17 @@ export const steps = [
   {
     number: "1",
     title: "Join a game",
-    description: "Pick an event or start one from the app.",
+    description: "Hit up an official event in a Safe Play Zone for guaranteed rivals.",
   },
   {
     number: "2",
     title: "Spread out",
-    description: "Three players form one triangle in real space.",
+    description: "Three players form one triangle in real space. Bigger is better.",
   },
   {
     number: "3",
     title: "Beat smaller teams",
-    description: "Bigger, smarter triangles beat smaller ones.",
+    description: "If they cut your shape, you're out. If you cut theirs, they're gone.",
   },
 ];
 
