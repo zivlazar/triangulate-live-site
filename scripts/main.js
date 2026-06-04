@@ -645,10 +645,7 @@ function placeLabel(event) {
 }
 
 function eventMicrocopy(event) {
-  const crewSuffix = event.team_member_count ? ` + ${event.team_member_count} crew` : "";
-  return event.team_name
-    ? `${event.team_name} hosting${crewSuffix}`
-    : `Hosted by organiser${crewSuffix}`;
+  return "Outdoor event";
 }
 
 function surfaceClassForEvent(event) {
@@ -704,26 +701,12 @@ function eventDetailsMarkup(event) {
             `
             : ""
         }
-        <div class="event-detail-item">
-          <span>Host</span>
-          <strong>Event organiser</strong>
-        </div>
         ${
           event.meeting_point_postcode
             ? `
               <div class="event-detail-item">
                 <span>Postcode</span>
                 <strong>${escapeHtml(event.meeting_point_postcode)}</strong>
-              </div>
-            `
-            : ""
-        }
-        ${
-          event.team_name
-            ? `
-              <div class="event-detail-item">
-                <span>Team</span>
-                <strong>${escapeHtml(event.team_name)}${event.team_member_count ? ` · ${escapeHtml(String(event.team_member_count))} crew` : ""}</strong>
               </div>
             `
             : ""
@@ -800,7 +783,6 @@ function eventCardMarkup(event) {
         }
         <div class="event-card__stats">
           ${event.registration_count > 0 ? `<span class="event-stat">${event.registration_count} going</span>` : ""}
-          ${event.team_member_count ? `<span class="event-stat">${event.team_member_count} in crew</span>` : ""}
         </div>
         <div class="event-card__footer">
           <button class="button button--secondary" type="button" data-event-toggle="${escapeHtml(event.id)}">
