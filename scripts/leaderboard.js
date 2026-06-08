@@ -267,5 +267,16 @@ export function initLeaderboard() {
   }
 
   refresh();
-  window.setInterval(refresh, 30000);
+
+  // Egress: the leaderboard reads the game Supabase project, so an open tab
+  // polling every 30s is continuous traffic against it. Poll every 120s and
+  // only while the tab is visible (a backgrounded tab makes no requests), then
+  // refresh immediately when the viewer returns so the data is still fresh.
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") refresh();
+  }, 120000);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refresh();
+  });
 }
