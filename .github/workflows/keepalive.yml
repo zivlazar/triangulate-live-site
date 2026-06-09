@@ -1,0 +1,24 @@
+name: Keep Supabase awake
+
+# Free-tier Supabase projects auto-pause after ~7 days of no external API
+# activity. This pings the website DB (wnkbkgnydrmwgudbdqin) once a day so the
+# inactivity timer never reaches the pause threshold. A pause would break the
+# waitlist, contact/feedback, admin event-approval, and social-publish features.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'      # daily 06:17 UTC (odd minute, off GitHub's top-of-hour rush)
+  workflow_dispatch:          # allow manual runs
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping website DB REST API
+        env:
+          ANON: ${{ secrets.SUPABASE_ANON }}
+        run: |
+          curl -fsS -o /dev/null -w 'HTTP %{http_code}\n' \
+            --retry 3 --retry-delay 5 \
+            -H "apikey: $ANON" \
+            "https://wnkbkgnydrmwgudbdqin.supabase.co/rest/v1/waitlist?select=count"
